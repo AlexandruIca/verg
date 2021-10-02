@@ -1,0 +1,78 @@
+on:
+  push:
+    branches: ["main", "VG-*"]
+  pull_request:
+    branches: ["main", "VG-*"]
+
+name: CI
+
+env:
+  RUST_BACKTRACE: 1
+  minrust: 1.50.0
+
+jobs:
+  all-passes:
+    name: Check for successful CI build
+    runs-on: ubuntu-latest
+    needs:
+      - fmt
+      - clippy
+      - coverage
+      - tests
+    steps:
+      - run: exit 0
+
+  fmt:
+    name: Checking formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Rust
+        run: rustup update stable
+      - uses: Swatinem/rust-cache@v1
+      - name: Install rustfmt
+        run: rustup component add rustfmt
+      - name: "rustfmt --check"
+        run: cargo fmt --all -- --check
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Rust
+        run: rustup update stable
+      - uses: Swatinem/rust-cache@v1
+      - name: Install clippy
+        run: rustup component add clippy
+      - name: "clippy --all"
+        run: cargo clippy --all --tests
+
+  coverage:
+    name: Run tarpaulin
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: "cargo tarpaulin"
+        uses: actions-rs/tarpaulin@v0.1
+
+  tests:
+    name: Run tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - windows-latest
+          - ubuntu-latest
+          - macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Rust
+        run: rustup update stable
+      - uses: Swatinem/rust-cache@v1
+      - name: "cargo test --all-features"
+        run: cargo test --all-features
