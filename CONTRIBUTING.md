@@ -48,6 +48,6 @@ Modifying the CI pipeline shouldn't be needed often, but when it's needed it's a
 To overcome this, the usual workflow is:
 - Create a temporary branch whose sole purpose is to modify stuff in `.github/workflows/`(make sure the branch starts with `VG-*`, otherwise the CI pipeline will ignore the branch)
 - Push all the annoying commits to this branch
-- After you are pleased with the modifications you can copy the `.yml` file(s) to the branch you are _actually_ working on, deleting the temporary branch
+- After you are pleased with the modifications you can copy the `.yml` file(s) to the branch you are _actually_ working on **without** merging, deleting the temporary branch
 
 This way we can have nice, clean history and a happy CI pipeline!
