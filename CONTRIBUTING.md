@@ -41,3 +41,13 @@ You shouldn't need more than two components, if you do then maybe that commit sh
 
 # After you're done working
 You should run tests, run clippy and run rustfmt to avoid failed CI builds. If everything's ok and the CI builds successfully you can create a PR to be merged into main. PRs might not be needed because I'm by myself but it's still nice to have an organized way to see project history.
+
+# Notes on making changes to the CI pipeline
+Modifying the CI pipeline shouldn't be needed often, but when it's needed it's a pretty ugly process, it usually involves pushing lots of commits that fix very minor things, cluttering the project's history. Rebasing those commits is not an option since the commits need to be _pushed_ upstream before the CI jobs are even run.
+
+To overcome this, the usual workflow is:
+- Create a temporary branch whose sole purpose is to modify stuff in `.github/workflows/`(make sure the branch starts with `VG-*`, otherwise the CI pipeline will ignore the branch)
+- Push all the annoying commits to this branch
+- After you are pleased with the modifications you can copy the `.yml` file(s) to the branch you are _actually_ working on, deleting the temporary branch
+
+This way we can have nice, clean history and a happy CI pipeline!
