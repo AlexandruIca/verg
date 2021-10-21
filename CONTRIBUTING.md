@@ -40,7 +40,7 @@ ci:docs: <What changed> (#13)
 You shouldn't need more than two components, if you do then maybe that commit should have been split into multiple commits. Keep commits simple and to the point. You can take a look [here](https://chris.beams.io/posts/git-commit/) for some additional advice on how to write commit messages.
 
 # After you're done working
-You should run tests, run clippy and run rustfmt to avoid failed CI builds. If everything's ok and the CI builds successfully you can create a PR to be merged into main. PRs might not be needed because I'm by myself but it's still nice to have an organized way to see project history.
+You should run tests, run clippy and run rustfmt to avoid failed CI builds. If everything's ok and the CI builds successfully you can create a PR to be merged into main. PRs might not be needed because I'm by myself but it's still nice to have an organized way to see project history. PRs should be named like this: `#issue_number Short description of what's being merged`. You can also include as many details as you want in the message.
 
 # Notes on making changes to the CI pipeline
 Modifying the CI pipeline shouldn't be needed often, but when it's needed it's a pretty ugly process, it usually involves pushing lots of commits that fix very minor things, cluttering the project's history. Rebasing those commits is not an option since the commits need to be _pushed_ upstream before the CI jobs are even run.
