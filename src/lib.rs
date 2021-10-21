@@ -1,3 +1,2 @@
-pub fn double(a: i32) -> i32 {
-    a * 2
-}
+pub mod canvas;
+pub mod error_types;
