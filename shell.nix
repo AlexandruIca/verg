@@ -1,5 +1,5 @@
 let
-    pkgs = import (fetchTarball("https://github.com/NixOS/nixpkgs/archive/ee90403e147b181300dffca5b0afa405e14f1945.tar.gz")) {};
+    pkgs = import (fetchTarball("https://github.com/NixOS/nixpkgs/archive/573095944e7c1d58d30fc679c81af63668b54056.tar.gz")) {};
 in pkgs.mkShell {
     name = "rust-environment";
     buildInputs = [

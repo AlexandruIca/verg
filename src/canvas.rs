@@ -1,55 +1,72 @@
-use crate::error_types::VergError;
-use std::convert::TryFrom;
+use crate::color::{FillRule, FillStyle};
+use crate::geometry::{Primitive, Shape};
+use std::vec::Vec;
 
-pub const NUM_CHANNELS: i64 = 4; // RGBA
-
-#[derive(Debug)]
-pub struct Canvas<'a> {
-    pub buffer: &'a mut [f64],
-    pub width: i64,
-    pub height: i64,
+#[derive(Debug, Clone)]
+struct AccumulationCell {
+    cover: u8,
+    area: u8,
 }
 
-impl<'a> Canvas<'a> {
-    pub fn from_buffer(image: &mut [f64], width: i64, height: i64) -> Result<Canvas, VergError> {
-        let image_isize = width
-            .checked_mul(height)
-            .ok_or(VergError::SizeTooBig { width, height })
-            .map(|value: i64| NUM_CHANNELS * value)?;
+#[derive(Debug)]
+pub struct CanvasDescription {
+    pub width: usize,
+    pub height: usize,
+    pub pixel_size: usize,
+    pub num_channels: u8,
+}
 
-        let image_size = usize::try_from(image_isize).map_err(|_| VergError::NegativeImageSize {
-            image_size: image_isize,
-        });
-
-        if image.len() != image_size? {
-            return Err(VergError::BadDimensions {
-                expected_width: width,
-                expected_height: height,
-                actual_size: image.len() as i64,
-            });
+impl Default for CanvasDescription {
+    fn default() -> Self {
+        CanvasDescription {
+            width: 600,
+            height: 600,
+            pixel_size: 256,
+            num_channels: 4,
         }
+    }
+}
 
-        Ok(Canvas {
-            buffer: image,
-            width,
-            height,
-        })
+#[derive(Debug)]
+pub struct Canvas {
+    buffer: Vec<f64>,
+    accumulation_buffer: Vec<AccumulationCell>,
+    pub desc: CanvasDescription,
+}
+
+impl Canvas {
+    pub fn new(desc: CanvasDescription) -> Canvas {
+        let image_size = desc.width * desc.height * (desc.num_channels as usize);
+
+        Canvas {
+            buffer: vec![0.0f64; image_size],
+            accumulation_buffer: vec![
+                AccumulationCell { cover: 0, area: 0 };
+                desc.width * desc.height
+            ],
+            desc,
+        }
     }
 
-    pub fn to_u8(&self, output: &mut [u8]) -> Result<(), VergError> {
-        if self.buffer.len() != output.len() {
-            return Err(VergError::BadOutputDimensions {
-                buffer_size: output.len() as i64,
-                expected_size: self.buffer.len() as i64,
-            });
-        }
+    pub fn to_u8(&self) -> Vec<u8> {
+        let mut result = vec![0u8; self.buffer.len()];
 
         self.buffer.iter().enumerate().for_each(|(index, value)| {
             // https://stackoverflow.com/a/56842762/8622014
             const FACTOR: f64 = (u8::MAX as f64) - f64::EPSILON * 128.0f64;
-            output[index] = (*value * FACTOR) as u8;
+            result[index] = (*value * FACTOR) as u8;
         });
 
-        Ok(())
+        return result;
+    }
+
+    pub fn draw_shape(&mut self, shape: Shape, _fill_style: FillStyle, _fill_rule: FillRule) {
+        for primitive in shape.iter() {
+            match primitive {
+                Primitive::Line { start: _, end: _ } => {
+                    unimplemented!();
+                }
+            }
+        }
     }
 }

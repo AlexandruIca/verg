@@ -1,2 +1,3 @@
 pub mod canvas;
-pub mod error_types;
+pub mod color;
+pub mod geometry;
