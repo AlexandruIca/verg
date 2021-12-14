@@ -1,17 +1,18 @@
+#[derive(Debug)]
 pub struct Color {
-    r: f64,
-    g: f64,
-    b: f64,
-    a: f64,
+    pub r: f64,
+    pub g: f64,
+    pub b: f64,
+    pub a: f64,
 }
 
 impl Default for Color {
     fn default() -> Color {
         Color {
-            r: 0.0f64,
-            g: 0.0f64,
-            b: 0.0f64,
-            a: 0.0f64,
+            r: 0.0_f64,
+            g: 0.0_f64,
+            b: 0.0_f64,
+            a: 0.0_f64,
         }
     }
 }
