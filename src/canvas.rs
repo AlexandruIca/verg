@@ -73,6 +73,28 @@ impl Canvas {
             .collect::<Vec<u8>>();
     }
 
+    fn buffer_set_at(&mut self, x: i64, y: i64, color: &Color) {
+        let starting: usize = y as usize * self.desc.width * self.desc.num_channels as usize
+            + x as usize * self.desc.num_channels as usize;
+
+        self.buffer[starting] = color.r;
+        self.buffer[starting + 1] = color.g;
+        self.buffer[starting + 2] = color.b;
+        self.buffer[starting + 3] = color.a;
+    }
+
+    fn buffer_get_at(&mut self, x: i64, y: i64) -> Color {
+        let starting: usize = y as usize * self.desc.width * self.desc.num_channels as usize
+            + x as usize * self.desc.num_channels as usize;
+
+        return Color {
+            r: self.buffer[starting],
+            g: self.buffer[starting + 1],
+            b: self.buffer[starting + 2],
+            a: self.buffer[starting + 3],
+        };
+    }
+
     ///
     /// # Note
     ///
@@ -81,6 +103,26 @@ impl Canvas {
     fn draw_line(&mut self, start: &Point, end: &Point) {
         let start = start.round_to_grid(self.desc.pixel_size);
         let end = end.round_to_grid(self.desc.pixel_size);
+
+        self.buffer_set_at(
+            start.x.0,
+            start.y.0,
+            &Color {
+                r: 1.0_f64,
+                a: 1.0_f64,
+                ..Default::default()
+            },
+        );
+
+        self.buffer_set_at(
+            end.x.0,
+            end.y.0,
+            &Color {
+                r: 1.0_f64,
+                a: 1.0_f64,
+                ..Default::default()
+            },
+        );
     }
 
     pub fn draw_shape(&mut self, shape: Shape, _fill_style: FillStyle, _fill_rule: FillRule) {
