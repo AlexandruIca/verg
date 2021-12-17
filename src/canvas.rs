@@ -83,7 +83,7 @@ impl Canvas {
         self.buffer[starting + 3] = color.a;
     }
 
-    fn buffer_get_at(&mut self, x: i64, y: i64) -> Color {
+    fn buffer_get_at(&self, x: i64, y: i64) -> Color {
         let starting: usize = y as usize * self.desc.width * self.desc.num_channels as usize
             + x as usize * self.desc.num_channels as usize;
 
