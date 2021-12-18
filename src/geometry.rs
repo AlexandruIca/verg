@@ -3,6 +3,10 @@ pub struct Point {
     pub y: f64,
 }
 
+///
+/// (position, cell_index)
+///
+#[derive(Clone)]
 pub struct GridPoint {
     pub x: (i64, i64),
     pub y: (i64, i64),
@@ -30,3 +34,38 @@ pub enum Primitive {
 }
 
 pub type Shape = Vec<Primitive>;
+
+// For line intersections: https://www.petercollingridge.co.uk/tutorials/computational-geometry/line-line-intersections/
+pub fn get_line_intersections_with_grid(start: &GridPoint, end: &GridPoint) -> Vec<GridPoint> {
+    let mut result = vec![start.clone()];
+
+    let x_dir = (end.x.0 - start.x.0).signum();
+    let y_dir = (end.y.0 - start.x.0).signum();
+
+    if x_dir == 0 || y_dir == 0 {
+        unimplemented!("Can't handle vertical/horizontal lines yet...");
+    }
+
+    let (start_x, end_x) = if x_dir < 0 {
+        (start.x.0 + 1, end.x.0 - 1)
+    } else {
+        (start.x.0 - 1, end.x.0 + 1)
+    };
+
+    let (start_y, end_y) = if y_dir < 0 {
+        (start.y.0 + 1, end.y.0 - 1)
+    } else {
+        (start.y.0 - 1, end.y.0 + 1)
+    };
+
+    let mut x = start_x;
+    while x != end_x {
+        x += x_dir;
+    }
+
+    result.push(end.clone());
+    return result;
+}
+
+#[test]
+fn test_intersections_with_grid() {}
