@@ -8,6 +8,7 @@ in pkgs.mkShell {
         pkgs.rustfmt
         pkgs.clippy
         pkgs.cargo-tarpaulin
+        pkgs.ghc
     ];
     shellHook = ''source ~/.bashrc'';
     RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
