@@ -42,6 +42,43 @@ range start end step = go start end step []
       | start == end = acc
       | otherwise = go (start + step) end step (acc ++ [start])
 
+-- Returns the parameters `(t, s)` at which `start` and `end` intersect.
+-- `t` is the parameter for `start`
+-- `s` is the parameter for `end`
+intersectTwoLines :: (GridPoint, GridPoint) -> (GridPoint, GridPoint) -> (Float, Float)
+intersectTwoLines
+  start@(GridPoint {x = (x0, fx0), y = (y0, fy0)}, GridPoint {x = (x1, fx1), y = (y1, fy1)})
+  end@(GridPoint {x = (x2, fx2), y = (y2, fy2)}, GridPoint {x = (x3, fx3), y = (y3, fy3)}) =
+    let (ax, ay) = gridPointToFloat . fst $ start
+        (bx, by) = gridPointToFloat . snd $ start
+        (cx, cy) = gridPointToFloat . fst $ end
+        (dx, dy) = gridPointToFloat . snd $ end
+
+        dx1 = bx - ax
+        dy1 = by - ay
+        dx2 = dx - cx
+        dy2 = dy - cy
+        dx3 = cx - ax
+        dy3 = cy - ay
+        gradientA = dy1 / dx1
+        gradientB = dy2 / dx2
+
+        -- We can afford to set s to an arbitrary value since we don't care at all what the value is
+        -- unless it's in the interval [0, 1]
+        s = if gradientA == gradientB then -1 else (dx1 * dy3 - dy1 * dx3) / (dy1 * dx2 - dx1 * dy2)
+
+        -- TODO: Merge with dx<n> names
+        dcx = dx - cx
+        bax = bx - ax
+        dcy = dy - cy
+        bay = by - ay
+
+        t =
+          if x0 == x1
+            then (s * dcy + cy - ay) / bay
+            else (s * dcx + cx - ax) / bax
+     in (t, s)
+
 intersectWithGrid :: GridPoint -> GridPoint -> [GridPoint]
 intersectWithGrid start end =
   let ((x0, fx0), (y0, fy0)) = (x start, y start)
@@ -62,39 +99,19 @@ intersectWithGrid start end =
       verticalLines = map verticalMap verticalRange
       horizontalLines = map horizontalMap horizontalRange
 
-      forEachHorizontal :: ((Float, Float), (Float, Float)) -> [GridPoint]
-      forEachHorizontal ((cx, cy), (dx, dy)) =
-        let dx1 = bx - ax
-            dy1 = by - ay
-            dx2 = dx - cx
-            dy2 = dy - cy
-            dx3 = cx - ax
-            dy3 = cy - ay
-            gradientA = dy1 / dx1
-            gradientB = dy2 / dx2
-
-            s = if gradientA == gradientB then -1 else (dx1 * dy3 - dy1 * dx3) / (dy1 * dx2 - dx1 * dy2)
-
-            -- TODO: Merge with dx<n> names
-            dcx = dx - cx
-            bax = bx - ax
-            dcy = dy - cy
-            bay = by - ay
-
-            t =
-              if x0 == x1
-                then (s * dcy + cy - ay) / bay
-                else (s * dcx + cx - ax) / bax
-         in [floatToGridPoint (ax + bax * t, ay + bay * t) | s >= 0, s <= 1, t >= 0, t <= 1]
+      forEachHorizontal :: (GridPoint, GridPoint) -> [GridPoint]
+      forEachHorizontal (c, d) =
+        let (t, s) = intersectTwoLines (start, end) (c, d)
+         in [floatToGridPoint (ax + (bx - ax) * t, ay + (by - ay) * t) | s >= 0, s <= 1, t >= 0, t <= 1]
 
       pointsOnHorizontals = map forEachHorizontal horizontalLines
    in concat pointsOnHorizontals
   where
-    verticalMap :: Int -> ((Float, Float), (Float, Float))
-    verticalMap i = ((fromIntegral i, 0), (fromIntegral i, fromIntegral height))
+    verticalMap :: Int -> (GridPoint, GridPoint)
+    verticalMap i = (GridPoint {x = (i, 0), y = (0, 0)}, GridPoint {x = (i, 0), y = (height, 0)})
 
-    horizontalMap :: Int -> ((Float, Float), (Float, Float))
-    horizontalMap i = ((0, fromIntegral i), (fromIntegral width, fromIntegral i))
+    horizontalMap :: Int -> (GridPoint, GridPoint)
+    horizontalMap i = (GridPoint {x = (0, 0), y = (i, 0)}, GridPoint {x = (width, 0), y = (i, 0)})
 
 main :: IO ()
 main = print $ intersectWithGrid GridPoint {x = (25, 1), y = (20, 0)} GridPoint {x = (23, 0), y = (20, 0)}
