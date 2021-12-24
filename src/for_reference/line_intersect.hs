@@ -37,6 +37,7 @@ range :: Int -> Int -> Int -> [Int]
 range start end step = go start end step []
   where
     go :: Int -> Int -> Int -> [Int] -> [Int]
+    go _ _ 0 _ = []
     go start end step acc
       | start == end = acc
       | otherwise = go (start + step) end step (acc ++ [start])
