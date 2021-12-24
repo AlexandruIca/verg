@@ -54,24 +54,18 @@ intersectTwoLines
         (cx, cy) = gridPointToFloat . fst $ end
         (dx, dy) = gridPointToFloat . snd $ end
 
-        dx1 = bx - ax
-        dy1 = by - ay
-        dx2 = dx - cx
-        dy2 = dy - cy
-        dx3 = cx - ax
-        dy3 = cy - ay
-        gradientA = dy1 / dx1
-        gradientB = dy2 / dx2
+        bax = bx - ax
+        bay = by - ay
+        dcx = dx - cx
+        dcy = dy - cy
+        cax = cx - ax
+        cay = cy - ay
+        gradientA = bay / bax
+        gradientB = dcy / dcx
 
         -- We can afford to set s to an arbitrary value since we don't care at all what the value is
         -- unless it's in the interval [0, 1]
-        s = if gradientA == gradientB then -1 else (dx1 * dy3 - dy1 * dx3) / (dy1 * dx2 - dx1 * dy2)
-
-        -- TODO: Merge with dx<n> names
-        dcx = dx - cx
-        bax = bx - ax
-        dcy = dy - cy
-        bay = by - ay
+        s = if gradientA == gradientB then -1 else (bax * cay - bay * cax) / (bay * dcx - bax * dcy)
 
         t =
           if x0 == x1
