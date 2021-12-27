@@ -107,9 +107,14 @@ intersectWithGrid start end =
     horizontalMap :: Int -> (GridPoint, GridPoint)
     horizontalMap i = (GridPoint {x = (0, 0), y = (i, 0)}, GridPoint {x = (width, 0), y = (i, 0)})
 
-main :: IO ()
-main = print $ intersectWithGrid GridPoint {x = (25, 1), y = (20, 0)} GridPoint {x = (23, 0), y = (20, 0)}
+tests =
+  [ (GridPoint {x = (25, 1), y = (20, 0)}, GridPoint {x = (23, 0), y = (20, 0)}),
+    (GridPoint {x = (25, 1), y = (20, 0)}, GridPoint {x = (25, 1), y = (25, 0)}),
+    (GridPoint {x = (25, 1), y = (20, 3)}, GridPoint {x = (20, 3), y = (25, 1)}),
+    (GridPoint {x = (20, 3), y = (25, 1)}, GridPoint {x = (25, 1), y = (20, 3)})
+  ]
 
---main = print $ intersectWithGrid GridPoint {x = (25, 1), y = (20, 0)} GridPoint {x = (25, 1), y = (25, 0)}
---main = print $ intersectWithGrid GridPoint {x = (25, 1), y = (20, 3)} GridPoint {x = (20, 3), y = (25, 1)}
---main = print $ intersectWithGrid GridPoint {x = (20, 3), y = (25, 1)} GridPoint {x = (25, 1), y = (20, 3)}
+main :: IO ()
+main = mapM_ (putStrLn . printTest) tests
+  where
+    printTest (a, b) = "A=" ++ show a ++ ", B=" ++ show b ++ ":\n" ++ unlines (map show (intersectWithGrid a b))
