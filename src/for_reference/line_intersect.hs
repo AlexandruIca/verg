@@ -1,4 +1,6 @@
-import GHC.Base (VecElem (Int16ElemRep))
+import Data.Foldable (toList)
+import Data.Sequence ((|>))
+import qualified Data.Sequence as Seq
 
 pixelSize :: Int
 pixelSize = 4
@@ -9,7 +11,11 @@ width = 600
 height :: Int
 height = 600
 
-data GridPoint = GridPoint {x :: (Int, Int), y :: (Int, Int)} deriving (Show)
+-- `x` and `y` are each described by two integers:
+-- 1. The coordinate itself
+-- 2. How much "into" the pixel the point is. This should be strictly less than `pixelSize`
+-- For example: `x` of `(10, 3)` means 3 supbixels inside the 10th pixel on the `x` axis.
+data GridPoint = GridPoint {x :: (Int, Int), y :: (Int, Int)} deriving (Show, Eq)
 
 gridPointToFloat :: GridPoint -> (Float, Float)
 gridPointToFloat point =
@@ -32,7 +38,6 @@ floatToGridPoint (x, y) = GridPoint {x = roundOnAxis x, y = roundOnAxis y}
           cellIndex = f / pixelLength
        in ((fst . properFraction) axis, floor cellIndex)
 
--- Generates numbers in range [start, end) with step (similar to python)
 range :: Int -> Int -> Int -> [Int]
 range start end step = go start end step []
   where
@@ -63,8 +68,8 @@ intersectTwoLines
         gradientA = bay / bax
         gradientB = dcy / dcx
 
-        -- We can afford to set s to an arbitrary value since we don't care at all what the value is
-        -- unless it's in the interval [0, 1]
+        -- We can afford to set `s` to an arbitrary value since we don't care at all what the value
+        -- is unless it's in the interval [0, 1]
         s = if gradientA == gradientB then -1 else (bax * cay - bay * cax) / (bay * dcx - bax * dcy)
 
         t =
@@ -98,14 +103,41 @@ intersectWithGrid start end =
         let (t, s) = intersectTwoLines (start, end) (c, d)
          in [floatToGridPoint (ax + (bx - ax) * t, ay + (by - ay) * t) | s >= 0, s <= 1, t >= 0, t <= 1]
 
-      pointsOnHorizontals = map forEachHorizontal horizontalLines
-   in concat pointsOnHorizontals
+      pointsOnHorizontals = concatMap forEachHorizontal horizontalLines
+      pointsOnHorizontals'' =
+        if last pointsOnHorizontals == end
+          then pointsOnHorizontals
+          else pointsOnHorizontals ++ [end]
+      pointsOnHorizontals' =
+        if head pointsOnHorizontals == start
+          then pointsOnHorizontals''
+          else start : pointsOnHorizontals''
+   in -- Search for intersections with vertical lines between points on horizontal lines
+      if null pointsOnHorizontals
+        then []
+        else foldl accumulateIntersections [start] (tail pointsOnHorizontals')
   where
     verticalMap :: Int -> (GridPoint, GridPoint)
     verticalMap i = (GridPoint {x = (i, 0), y = (0, 0)}, GridPoint {x = (i, 0), y = (height, 0)})
 
     horizontalMap :: Int -> (GridPoint, GridPoint)
     horizontalMap i = (GridPoint {x = (0, 0), y = (i, 0)}, GridPoint {x = (width, 0), y = (i, 0)})
+
+    accumulateIntersections :: [GridPoint] -> GridPoint -> [GridPoint]
+    accumulateIntersections acc p = acc ++ [p]
+
+    windows :: Int -> [a] -> [[a]]
+    windows n0 = go 0 Seq.empty
+      where
+        go n s (a : as)
+          | n' < n0 = go n' s' as
+          | n' == n0 = toList s' : go n' s' as
+          | otherwise = toList s'' : go n s'' as
+          where
+            n' = n + 1
+            s' = s |> a
+            s'' = Seq.drop 1 s'
+        go _ _ [] = []
 
 tests =
   [ (GridPoint {x = (25, 1), y = (20, 0)}, GridPoint {x = (23, 0), y = (20, 0)}),
