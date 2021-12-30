@@ -1,7 +1,3 @@
-import Data.Foldable (toList)
-import Data.Sequence ((|>))
-import qualified Data.Sequence as Seq
-
 pixelSize :: Int
 pixelSize = 4
 
@@ -153,19 +149,6 @@ intersectWithGrid start end =
 
     horizontalMap :: Int -> (GridPoint, GridPoint)
     horizontalMap i = (GridPoint {x = (0, 0), y = (i, 0)}, GridPoint {x = (width, 0), y = (i, 0)})
-
-    windows :: Int -> [a] -> [[a]]
-    windows n0 = go 0 Seq.empty
-      where
-        go n s (a : as)
-          | n' < n0 = go n' s' as
-          | n' == n0 = toList s' : go n' s' as
-          | otherwise = toList s'' : go n s'' as
-          where
-            n' = n + 1
-            s' = s |> a
-            s'' = Seq.drop 1 s'
-        go _ _ [] = []
 
 tests =
   [ (GridPoint {x = (25, 1), y = (20, 0)}, GridPoint {x = (23, 0), y = (20, 0)}),
