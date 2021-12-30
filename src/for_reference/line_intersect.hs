@@ -15,7 +15,10 @@ height = 600
 -- 1. The coordinate itself
 -- 2. How much "into" the pixel the point is. This should be strictly less than `pixelSize`
 -- For example: `x` of `(10, 3)` means 3 supbixels inside the 10th pixel on the `x` axis.
-data GridPoint = GridPoint {x :: (Int, Int), y :: (Int, Int)} deriving (Show, Eq)
+data GridPoint = GridPoint {x :: (Int, Int), y :: (Int, Int)} deriving (Show)
+
+instance Eq GridPoint where
+  GridPoint {x = (x0, _), y = (y0, _)} == GridPoint {x = (x1, _), y = (y1, _)} = x0 == x1 && y0 == y1
 
 gridPointToFloat :: GridPoint -> (Float, Float)
 gridPointToFloat point =
