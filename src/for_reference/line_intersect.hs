@@ -78,6 +78,13 @@ intersectTwoLines
             else (s * dcx + cx - ax) / bax
      in (t, s)
 
+-- The third parameter represents the directions for X/Y. It's used to know where the 'bounding' is.
+getBoundingCoordinates :: (Int, Int) -> (Int, Int) -> (Int, Int) -> ((Int, Int), (Int, Int))
+getBoundingCoordinates (x0, y0) (x1, y1) (dirX, dirY) =
+  let (startX, endX) = if dirX < 0 then (x0 + 1, x1 - 1) else (x0 - 1, x1 + 1)
+      (startY, endY) = if dirY < 0 then (y0 + 1, y1 - 1) else (y0 - 1, y1 + 1)
+   in ((startX, startY), (endX, endY))
+
 intersectWithGrid :: GridPoint -> GridPoint -> [GridPoint]
 intersectWithGrid start end =
   let ((x0, fx0), (y0, fy0)) = (x start, y start)
@@ -86,16 +93,12 @@ intersectWithGrid start end =
       dirX = signum (x1 - x0)
       dirY = signum (y1 - y0)
 
-      (startX, endX) = if dirX < 0 then (x0 + 1, x1 - 1) else (x0 - 1, x1 + 1)
-      (startY, endY) = if dirY < 0 then (y0 + 1, y1 - 1) else (y0 - 1, y1 + 1)
+      ((_, startY), (_, endY)) = getBoundingCoordinates (x0, y0) (x1, y1) (dirX, dirY)
 
       (ax, ay) = gridPointToFloat start
       (bx, by) = gridPointToFloat end
 
-      verticalRange = range startX endX dirX
       horizontalRange = range startY endY dirY
-
-      verticalLines = map verticalMap verticalRange
       horizontalLines = map horizontalMap horizontalRange
 
       forEachHorizontal :: (GridPoint, GridPoint) -> [GridPoint]
@@ -112,9 +115,34 @@ intersectWithGrid start end =
         if head pointsOnHorizontals == start
           then pointsOnHorizontals''
           else start : pointsOnHorizontals''
+
+      accumulateIntersections :: [GridPoint] -> GridPoint -> [GridPoint]
+      accumulateIntersections acc end =
+        let start = last acc
+            ((startX, endX), (_, _)) = getBoundingCoordinates (fst . x $ start, fst . x $ end) (fst . y $ start, fst . y $ end) (dirX, dirY)
+            verticalRange = range startX endX dirX
+            verticalLines = map verticalMap verticalRange
+            result = foldl accumulateVerticals [] verticalLines
+
+            accumulateVerticals :: [GridPoint] -> (GridPoint, GridPoint) -> [GridPoint]
+            accumulateVerticals acc (v1, v2) =
+              let (t, s) = intersectTwoLines (start, end) (v1, v2)
+                  (ax, ay) = gridPointToFloat start
+                  (bx, by) = gridPointToFloat end
+                  intersection = [floatToGridPoint (ax + (bx - ax) * t, ay + (by - ay) * t) | s >= 0, s <= 1, t >= 0, t <= 1]
+               in --acc ++ intersection
+                  if null intersection || (head intersection == start || head intersection == end)
+                    then acc
+                    else acc ++ intersection
+         in if not (null result)
+              then
+                if last result == end
+                  then acc ++ result
+                  else acc ++ result ++ [end]
+              else acc ++ [end]
    in -- Search for intersections with vertical lines between points on horizontal lines
       if null pointsOnHorizontals
-        then []
+        then [] -- TODO: handle horizontal line
         else foldl accumulateIntersections [start] (tail pointsOnHorizontals')
   where
     verticalMap :: Int -> (GridPoint, GridPoint)
@@ -122,9 +150,6 @@ intersectWithGrid start end =
 
     horizontalMap :: Int -> (GridPoint, GridPoint)
     horizontalMap i = (GridPoint {x = (0, 0), y = (i, 0)}, GridPoint {x = (width, 0), y = (i, 0)})
-
-    accumulateIntersections :: [GridPoint] -> GridPoint -> [GridPoint]
-    accumulateIntersections acc p = acc ++ [p]
 
     windows :: Int -> [a] -> [[a]]
     windows n0 = go 0 Seq.empty
@@ -143,7 +168,9 @@ tests =
   [ (GridPoint {x = (25, 1), y = (20, 0)}, GridPoint {x = (23, 0), y = (20, 0)}),
     (GridPoint {x = (25, 1), y = (20, 0)}, GridPoint {x = (25, 1), y = (25, 0)}),
     (GridPoint {x = (25, 1), y = (20, 3)}, GridPoint {x = (20, 3), y = (25, 1)}),
-    (GridPoint {x = (20, 3), y = (25, 1)}, GridPoint {x = (25, 1), y = (20, 3)})
+    (GridPoint {x = (20, 3), y = (25, 1)}, GridPoint {x = (25, 1), y = (20, 3)}),
+    (GridPoint {x = (20, 1), y = (30, 3)}, GridPoint {x = (27, 2), y = (33, 1)}),
+    (GridPoint {x = (27, 2), y = (33, 1)}, GridPoint {x = (20, 1), y = (30, 3)})
   ]
 
 main :: IO ()
