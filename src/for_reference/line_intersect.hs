@@ -129,8 +129,7 @@ intersectWithGrid start end =
                   (ax, ay) = gridPointToFloat start
                   (bx, by) = gridPointToFloat end
                   intersection = [floatToGridPoint (ax + (bx - ax) * t, ay + (by - ay) * t) | s >= 0, s <= 1, t >= 0, t <= 1]
-               in --acc ++ intersection
-                  if null intersection || (head intersection == start || head intersection == end)
+               in if null intersection || (head intersection == start || head intersection == end)
                     then acc
                     else acc ++ intersection
          in if not (null result)
@@ -141,7 +140,7 @@ intersectWithGrid start end =
               else acc ++ [end]
    in -- Search for intersections with vertical lines between points on horizontal lines
       if null pointsOnHorizontals
-        then [] -- TODO: handle horizontal line
+        then accumulateIntersections [start] end
         else foldl accumulateIntersections [start] (tail pointsOnHorizontals')
   where
     verticalMap :: Int -> (GridPoint, GridPoint)
