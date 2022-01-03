@@ -1,0 +1,109 @@
+% !TEX program = xelatex
+\documentclass[a4paper, 12pt]{report}
+
+\usepackage{fontspec}
+\usepackage[romanian]{babel}
+\usepackage{graphicx}
+
+\usepackage[backend=biber]{biblatex}
+\DeclareLanguageMapping{romanian}{romanian}
+\addbibresource{bibliography.bib}
+
+\usepackage{setspace}
+\onehalfspace
+
+\usepackage{csquotes}
+\DeclareQuoteStyle{romanian}
+  {\quotedblbase}
+  {\textquotedblright}
+  {\guillemotleft}
+  {\guillemotright}
+
+\usepackage{listings, listings-rust}
+
+\title{Whatever}
+\author{Alexandru-Gabriel Ică}
+\date{\today}
+\makeatletter
+
+\begin{document}
+
+\begin{titlepage}
+    \begin{figure}[!htb]
+    \centering
+    \begin{minipage}{0.19\textwidth}
+        \includegraphics[width=\linewidth]{img/UB_Logo.png}
+    \end{minipage}
+    \begin{minipage}{0.57\textwidth}
+        \large
+        \vspace{0.2cm}
+        \begin{center}
+            \textbf{Universitatea din București}
+        \end{center}
+        \vspace{0.3cm}
+        \begin{center}
+            \textbf{
+                Facultatea de \\
+                Matematică și Informatică
+            }
+        \end{center}
+    \end{minipage}
+    \begin{minipage}{0.21\textwidth}
+        \includegraphics[width=\linewidth]{img/FMI_Logo.png}
+    \end{minipage}
+    \end{figure}
+
+    \begin{center}
+        Specializarea Informatică
+    \end{center}
+
+    \vspace{0.5cm}
+
+    \begin{center}
+        {\Large Lucrare de licență}
+    \end{center}
+
+    \begin{center}
+        {\huge \@title}
+    \end{center}
+
+    \vspace{2.8cm}
+
+    \begin{center}
+        \large Absolvent \\ \@author
+    \end{center}
+
+    \vspace{0.25cm}
+
+    \begin{center}
+        \large Coordonator științific \\ Prof. Stupariu-Mihai Sorin
+    \end{center}
+
+    \vspace{2cm}
+
+    \begin{center}
+        \Large București, Iunie 2022
+    \end{center}
+\end{titlepage}
+\makeatother
+
+\chapter{Introducere}
+
+Grafica vectorială \cite{vector_graphics_wikipedia} este ...
+
+\chapter{Cod}
+
+\begin{figure}[ht]
+    \centering
+    \begin{lstlisting}[language=Rust]
+    fn main() {
+        println!("Hello {}!", "world");
+    }
+    \end{lstlisting}
+    \caption{Declarări}
+    \label{fig-rust}
+\end{figure}
+
+\printbibliography
+
+\end{document}
