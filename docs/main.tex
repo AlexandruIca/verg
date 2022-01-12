@@ -21,7 +21,7 @@
 
 \usepackage{listings, listings-rust}
 
-\title{Whatever}
+\title{Titlu}
 \author{Alexandru-Gabriel Ică}
 \date{\today}
 \makeatletter
@@ -87,11 +87,88 @@
 \end{titlepage}
 \makeatother
 
-\chapter{Introducere}
+\tableofcontents
 
-Grafica vectorială \cite{vector_graphics_wikipedia} este ...
+\chapter{Motivație}
 
-\chapter{Cod}
+Grafica vectorială \cite{vector_graphics_wikipedia} reprezintă un mod de a genera imagini
+direct din elemente geometrice precum linii drepte sau linii curbe. Acest mod de a reprezenta
+imaginile diferă de modul „standard”, adică grafica rasterizată, prin faptul că randarea imaginii
+nu își pierde calitatea indiferent de rezoluția la care vrem să o afișăm. De asemenea, imaginile
+pot fi stocate mai eficient din punct de vedere al spațiului deoarece nu trebuie să reținem pixeli
+la rezoluții mari.
+
+Grafica vectorială este folosită foarte des, una din principalele utilizări fiind randarea textului
+pe ecran. Se poate regăsi și în interfețe grafice (de exemplu iconițe sau butoane) sau pe site-uri
+web (în format SVG \cite{svg_standard}).
+
+În ciuda faptului că grafica vectorială este des întâlnită, opțiunile pe care le avem pentru a putea
+integra pe aceasta în proiecte nu sunt chiar triviale, menționăm câteva din cele mai folosite biblioteci:
+\begin{itemize}
+    \item{Skia \cite{skia_library}: o bibliotecă puternică, cu multe funcționalități, dar care suferă
+        de un proces de integrare destul de complex, aceasta depinzând de Bazel \cite{bazel_build_system},
+        care, la rândul lui, depinde de Java \cite{java_programming_language}}
+    \item{Cairo \cite{cairo_library}: din nou o bibliotecă cu multe funcționalități, dar care suferă de aceeași
+        problemă legată de procesul de integrare, mai ales pe sistemele de operare care nu sunt tip UNIX \cite{unix}}
+    \item{Bibliotecile care vin la pachet cu diverse sisteme de operare: acestea sunt avantajoase deoarece pot fi
+        integrate ușor. Inconvenientul este că sunt diferențe destul de mari între implementări, diferențe și de
+        performanță și de calitate, este destul de dificil să se obțină un rezultat identic pe platforme diferite}
+\end{itemize}
+
+\section{Problema abordată}
+
+Ceea ce vreau să creez este o bibliotecă de grafică vectorială care să fie ușor de integrat într-un proiect,
+care să fie de o calitate decentă și care să aibă aceeași calitate pe platforme diferite.
+Pentru acest fapt am ales să folosesc limbajul Rust \cite{rust_lang}. Motivul principal este că Rust are un manager
+de pachete standard, ușor de folosit. Alt motiv este faptul că Rust este printre singurele limbaje populare care să
+dispună de un astfel de manager de pachete, și care să concureze în aceeași nișă ca limbajele în care sunt implementate
+bibliotecile menționate mai sus (C++ și C). Acest manager de pachete face integrarea într-un proiect mult mai ușoară.
+
+\section{Obiective}
+
+Obiectivul principal al acestei lucrări este o bibliotecă de grafică vectorială simplă, ușor de folosit și de integrat
+într-un proiect, de o calitate decentă, cu funcționalități standard, care să aibă aceeași calitate pe orice platformă
+suportată.
+
+\section{Alte proiecte relevante}
+
+\chapter{Algoritmul de bază}
+
+\section{Algoritmul de la baza AntiGrain}
+
+\section{Algoritmul de intersecție între linii}
+
+\section{Aplicarea algoritmului pe un set de date}
+
+\section{Cum tratăm liniile verticale?}
+
+\chapter{Extinderea algoritmului la mai multe primitive}
+
+\section{Curbe Bézier}
+
+\section{Transformarea curbelor Bézier pătratice în set de linii}
+
+\section{Transformarea curbelor Bézier cubice în set de linii}
+
+\chapter{Efecte}
+
+\section{Gradienți}
+
+\subsection{Liniari}
+\subsection{Radiali}
+\subsection{Conici}
+
+\section{Amestecare}
+\subsection{Amestecarea mai multor figuri făcând parte din același grup}
+\subsection{Porter-Duff}
+
+\section{Decuparea}
+
+\section{Mascarea}
+
+\section{Spații de culoare}
+
+\chapter{Exemplu de cod Rust}
 
 \begin{figure}[ht]
     \centering
@@ -100,7 +177,7 @@ Grafica vectorială \cite{vector_graphics_wikipedia} este ...
         println!("Hello {}!", "world");
     }
     \end{lstlisting}
-    \caption{Declarări}
+    \caption{Un simplu 'Hello World!'}
     \label{fig-rust}
 \end{figure}
 
