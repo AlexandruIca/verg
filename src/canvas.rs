@@ -13,7 +13,6 @@ pub struct CanvasDescription {
     pub width: usize,
     pub height: usize,
     pub pixel_size: usize,
-    pub num_channels: u8,
     pub background_color: Color,
 }
 
@@ -23,11 +22,12 @@ impl Default for CanvasDescription {
             width: 600,
             height: 600,
             pixel_size: 256,
-            num_channels: 4,
             background_color: Color::default(),
         }
     }
 }
+
+const NUM_CHANNELS: usize = 4;
 
 #[derive(Debug)]
 pub struct Canvas {
@@ -38,12 +38,12 @@ pub struct Canvas {
 
 impl Canvas {
     pub fn new(desc: CanvasDescription) -> Canvas {
-        let image_size = desc.width * desc.height * (desc.num_channels as usize);
+        let image_size = desc.width * desc.height * NUM_CHANNELS;
         let mut buffer = vec![0.0_f64; image_size];
 
         buffer
             .as_mut_slice()
-            .chunks_mut(desc.num_channels as usize)
+            .chunks_mut(NUM_CHANNELS)
             .for_each(|chunk| {
                 chunk[0] = desc.background_color.r;
                 chunk[1] = desc.background_color.g;
@@ -74,8 +74,9 @@ impl Canvas {
     }
 
     fn buffer_set_at(&mut self, x: i64, y: i64, color: &Color) {
-        let starting: usize = y as usize * self.desc.width * self.desc.num_channels as usize
-            + x as usize * self.desc.num_channels as usize;
+        let xu = x as usize;
+        let yu = y as usize;
+        let starting: usize = yu * self.desc.width * NUM_CHANNELS + xu * NUM_CHANNELS;
 
         self.buffer[starting] = color.r;
         self.buffer[starting + 1] = color.g;
@@ -84,8 +85,9 @@ impl Canvas {
     }
 
     fn buffer_get_at(&self, x: i64, y: i64) -> Color {
-        let starting: usize = y as usize * self.desc.width * self.desc.num_channels as usize
-            + x as usize * self.desc.num_channels as usize;
+        let xu = x as usize;
+        let yu = y as usize;
+        let starting: usize = yu * self.desc.width * NUM_CHANNELS + xu * NUM_CHANNELS;
 
         return Color {
             r: self.buffer[starting],
