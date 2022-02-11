@@ -6,25 +6,26 @@ pub struct Point {
 }
 
 impl Point {
+    ///
+    /// A whole pixel is considered a `pixel_size` by `pixel_size` matrix.
+    ///
+    /// This function takes a normal coordinate and places it in a grid of pixels with `pixel_size` precision.
+    ///
     pub fn round_to_grid(&self, pixel_size: usize) -> GridPoint {
         let round_on_axis = |axis: f64| -> (i64, i64) {
             let pixel_length = 1_f64 / (pixel_size as f64);
-            let f = axis.fract();
-            let cell_index = f / pixel_length;
+            let cell_index = axis.fract() / pixel_length;
 
-            return (axis.trunc() as i64, cell_index as i64);
+            (axis.trunc() as i64, cell_index as i64)
         };
 
-        return GridPoint {
+        GridPoint {
             x: round_on_axis(self.x),
             y: round_on_axis(self.y),
-        };
+        }
     }
 }
 
-///
-/// (position, cell_index)
-///
 #[derive(Clone, Debug)]
 pub struct GridPoint {
     pub x: (i64, i64),
@@ -39,7 +40,7 @@ impl GridPoint {
         let (y, fy) = (iy as f64, ify as f64);
         let pixel_size = pixel_size as f64;
 
-        return (x + fx / pixel_size, y + fy / pixel_size);
+        (x + fx / pixel_size, y + fy / pixel_size)
     }
 }
 
@@ -65,37 +66,10 @@ pub enum Primitive {
 
 pub type Shape = Vec<Primitive>;
 
-pub fn get_line_intersections_with_grid(start: &GridPoint, end: &GridPoint) -> Vec<GridPoint> {
-    let mut result = vec![start.clone()];
-
-    let x_dir = (end.x.0 - start.x.0).signum();
-    let y_dir = (end.y.0 - start.x.0).signum();
-
-    if x_dir == 0 || y_dir == 0 {
-        unimplemented!("Can't handle vertical/horizontal lines yet...");
-    }
-
-    let (start_x, end_x) = if x_dir < 0 {
-        (start.x.0 + 1, end.x.0 - 1)
-    } else {
-        (start.x.0 - 1, end.x.0 + 1)
-    };
-
-    let (_start_y, _end_y) = if y_dir < 0 {
-        (start.y.0 + 1, end.y.0 - 1)
-    } else {
-        (start.y.0 - 1, end.y.0 + 1)
-    };
-
-    let mut x = start_x;
-    while x != end_x {
-        x += x_dir;
-    }
-
-    result.push(end.clone());
-    return result;
-}
-
+///
+/// Returns the starting and ending coordinates between which we need to iterate, so that
+/// we don't miss any lines with which we want to intersect with.
+///
 pub fn get_bounding_coordinates(
     (x0, y0): (i64, i64),
     (x1, y1): (i64, i64),
@@ -113,38 +87,33 @@ pub fn get_bounding_coordinates(
         (y0 - 1, y1 + 1)
     };
 
-    return ((start_x, start_y), (end_x, end_y));
+    ((start_x, start_y), (end_x, end_y))
 }
 
 /// https://www.petercollingridge.co.uk/tutorials/computational-geometry/line-line-intersections/
 ///
-/// \returns (t, s), `t` is for `start`, `s` is for `end`
+/// \returns Line parameters `(t, s)`, `t` is for `start`, `s` is for `end`.
 ///
 pub fn intersect_two_lines(
     start: (&GridPoint, &GridPoint),
     end: (&GridPoint, &GridPoint),
     pixel_size: usize,
 ) -> (f64, f64) {
-    let x0 = start.0.x.0;
-    let x1 = start.1.x.0;
+    let (x0, x1) = (start.0.x.0, start.1.x.0);
 
     let (ax, ay) = start.0.to_float(pixel_size);
     let (bx, by) = start.1.to_float(pixel_size);
     let (cx, cy) = end.0.to_float(pixel_size);
     let (dx, dy) = end.1.to_float(pixel_size);
 
-    let bax = bx - ax;
-    let bay = by - ay;
-    let dcx = dx - cx;
-    let dcy = dy - cy;
-    let cax = cx - ax;
-    let cay = cy - ay;
+    let (bax, bay) = (bx - ax, by - ay);
+    let (dcx, dcy) = (dx - cx, dy - cy);
+    let (cax, cay) = (cx - ax, cy - ay);
 
-    let gradient_a = bay / bax;
-    let gradient_b = dcy / dcx;
+    let (gradient_a, gradient_b) = (bay / bax, dcy / dcx);
 
     let s = if (gradient_a - gradient_b).abs() < f64::EPSILON {
-        -1.0f64
+        -1.0_f64
     } else {
         (bax * cay - bay * cax) / (bay * dcx - bax * dcy)
     };
@@ -155,41 +124,36 @@ pub fn intersect_two_lines(
         (s * dcx + cx - ax) / bax
     };
 
-    return (t, s);
+    (t, s)
 }
 
 fn line_parameter_is_ok(t: f64) -> bool {
-    t >= 0f64 && t <= 1f64
+    (0_f64..=1_f64).contains(&t)
 }
 
-pub fn intersect_line_with_grid(
-    a: &GridPoint,
-    b: &GridPoint,
-    canvas: &CanvasDescription,
-) -> Vec<GridPoint> {
-    let (x0, _fx0) = a.x;
-    let (y0, _fy0) = a.y;
-    let (x1, _fx1) = b.x;
-    let (y1, _fy1) = b.y;
+#[derive(Eq, PartialEq)]
+enum IntersectionWith {
+    Horizontals,
+    Verticals,
+}
 
-    let dir_x = (x1 - x0).signum();
-    let dir_y = (y1 - y0).signum();
-
-    let ((_, start_y), (_, end_y)) = get_bounding_coordinates((x0, y0), (x1, y1), (dir_x, dir_y));
-
-    let (ax, ay) = a.to_float(canvas.pixel_size);
-    let (bx, by) = b.to_float(canvas.pixel_size);
-
-    let mut points_on_horizontals = Vec::<GridPoint>::new();
-
-    // for each horizontal line
-    let mut i = start_y;
-    while i != end_y {
-        if dir_y == 0 {
-            break;
+fn push_new_point(acc: &mut Vec<GridPoint>, point: GridPoint) {
+    if let Some(prev) = acc.last() {
+        if prev != &point {
+            acc.push(point);
         }
+    } else {
+        acc.push(point);
+    }
+}
 
-        let (c, d) = (
+fn index_to_line(
+    i: i64,
+    dir: &IntersectionWith,
+    canvas: &CanvasDescription,
+) -> (GridPoint, GridPoint) {
+    match dir {
+        IntersectionWith::Horizontals => (
             GridPoint {
                 x: (0, 0),
                 y: (i, 0),
@@ -198,104 +162,107 @@ pub fn intersect_line_with_grid(
                 x: (canvas.width as i64, 0),
                 y: (i, 0),
             },
-        );
-
-        let (t, s) = intersect_two_lines((a, b), (&c, &d), canvas.pixel_size);
-
-        if line_parameter_is_ok(t) && line_parameter_is_ok(s) {
-            points_on_horizontals.push(
-                Point {
-                    x: (ax + (bx - ax) * t),
-                    y: (ay + (by - ay) * t),
-                }
-                .round_to_grid(canvas.pixel_size),
-            );
-        }
-        i += dir_y;
+        ),
+        IntersectionWith::Verticals => (
+            GridPoint {
+                x: (i, 0),
+                y: (0, 0),
+            },
+            GridPoint {
+                x: (i, 0),
+                y: (canvas.height as i64, 0),
+            },
+        ),
     }
+}
 
-    if let Some(point) = points_on_horizontals.first() {
-        if point != a {
-            points_on_horizontals.insert(0, a.clone());
-        }
-    }
-    if let Some(point) = points_on_horizontals.last() {
-        if point != b {
-            points_on_horizontals.push(b.clone());
-        }
-    }
+// This includes `b` in `acc` (it's meant to be used iteratively between many points for reuse).
+#[allow(clippy::many_single_char_names)]
+fn get_intersections_between_two_points(
+    a: &GridPoint,
+    b: &GridPoint,
+    dir: IntersectionWith,
+    acc: &mut Vec<GridPoint>,
+    canvas: &CanvasDescription,
+) {
+    let (x0, y0) = (a.x.0, a.y.0);
+    let (x1, y1) = (b.x.0, b.y.0);
 
-    let mut intersections = vec![a.clone()];
+    let dir_x = (x1 - x0).signum();
+    let dir_y = (y1 - y0).signum();
 
-    let accumulate_intersections = |acc: &mut Vec<GridPoint>, end: &GridPoint| {
-        let start = acc.last().unwrap();
-        let ((start_x, end_x), _) =
-            get_bounding_coordinates((start.x.0, end.x.0), (start.y.0, end.y.0), (dir_x, dir_y));
-        let mut vertical_intersections = Vec::<GridPoint>::new();
+    let ((start_x, start_y), (end_x, end_y)) =
+        get_bounding_coordinates((x0, y0), (x1, y1), (dir_x, dir_y));
 
-        // for each vertical line
-        let mut i = start_x;
-        while i != end_x {
-            if dir_x == 0 {
-                break;
-            }
+    let (ax, ay) = a.to_float(canvas.pixel_size);
+    let (bx, by) = b.to_float(canvas.pixel_size);
 
-            let accumulate_verticals =
-                |verticals: &mut Vec<GridPoint>, (v1, v2): (&GridPoint, &GridPoint)| {
-                    let (t, s) = intersect_two_lines((start, end), (v1, v2), canvas.pixel_size);
-                    let (ax, ay) = start.to_float(canvas.pixel_size);
-                    let (bx, by) = end.to_float(canvas.pixel_size);
-
-                    if line_parameter_is_ok(s) && line_parameter_is_ok(t) {
-                        let p = Point {
-                            x: (ax + (bx - ax) * t),
-                            y: (ay + (by - ay) * t),
-                        }
-                        .round_to_grid(canvas.pixel_size);
-
-                        if p != *start && p != *end {
-                            verticals.push(p);
-                        }
-                    }
-                };
-
-            let (v1, v2) = (
-                GridPoint {
-                    x: (i, 0),
-                    y: (0, 0),
-                },
-                GridPoint {
-                    x: (i, 0),
-                    y: (canvas.height as i64, 0),
-                },
-            );
-
-            accumulate_verticals(&mut vertical_intersections, (&v1, &v2));
-
-            i += dir_x;
-        }
-
-        if !vertical_intersections.is_empty() {
-            if vertical_intersections.last().unwrap() == end {
-                acc.extend(vertical_intersections);
-            } else {
-                vertical_intersections.push(end.clone());
-                acc.extend(vertical_intersections);
-            }
-        } else {
-            acc.push(end.clone());
-        }
+    let (start, end, dir_offset) = match dir {
+        IntersectionWith::Horizontals => (start_y, end_y, dir_y),
+        IntersectionWith::Verticals => (start_x, end_x, dir_x),
     };
 
-    if points_on_horizontals.is_empty() {
-        accumulate_intersections(&mut intersections, b);
-    } else {
-        for p in points_on_horizontals[1..].into_iter() {
-            accumulate_intersections(&mut intersections, p);
+    if dir_offset != 0 {
+        let mut i = start;
+        while i != end {
+            let (c, d) = index_to_line(i, &dir, canvas);
+            let (t, s) = intersect_two_lines((a, b), (&c, &d), canvas.pixel_size);
+
+            if line_parameter_is_ok(t) && line_parameter_is_ok(s) {
+                push_new_point(
+                    acc,
+                    Point {
+                        x: (ax + (bx - ax) * t),
+                        y: (ay + (by - ay) * t),
+                    }
+                    .round_to_grid(canvas.pixel_size),
+                );
+            }
+
+            i += dir_offset;
         }
     }
 
-    return intersections;
+    push_new_point(acc, b.clone());
+}
+
+pub fn intersect_line_with_grid(
+    a: &GridPoint,
+    b: &GridPoint,
+    canvas: &CanvasDescription,
+) -> Vec<GridPoint> {
+    let mut on_horizontals = vec![a.clone()];
+    let mut on_verticals = vec![a.clone()];
+
+    get_intersections_between_two_points(
+        a,
+        b,
+        IntersectionWith::Horizontals,
+        &mut on_horizontals,
+        canvas,
+    );
+
+    if on_horizontals.is_empty() {
+        get_intersections_between_two_points(
+            a,
+            b,
+            IntersectionWith::Verticals,
+            &mut on_verticals,
+            canvas,
+        );
+    } else {
+        on_horizontals.windows(2).for_each(|points: &[GridPoint]| {
+            get_intersections_between_two_points(
+                &points[0],
+                &points[1],
+                IntersectionWith::Verticals,
+                &mut on_verticals,
+                canvas,
+            )
+        });
+    }
+
+    on_verticals
 }
 
 #[test]
@@ -380,7 +347,7 @@ fn test_intersections_with_grid() {
             println!("{}", p);
         }
 
-        println!("");
+        println!();
         i += 1;
     }
 }

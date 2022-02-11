@@ -68,7 +68,8 @@ impl Canvas {
             .map(|value| {
                 // https://stackoverflow.com/a/56842762/8622014
                 const FACTOR: f64 = (u8::MAX as f64) - f64::EPSILON * 128_f64;
-                return (*value * FACTOR) as u8;
+
+                (*value * FACTOR) as u8
             })
             .collect::<Vec<u8>>();
     }
@@ -89,12 +90,12 @@ impl Canvas {
         let yu = y as usize;
         let starting: usize = yu * self.desc.width * NUM_CHANNELS + xu * NUM_CHANNELS;
 
-        return Color {
+        Color {
             r: self.buffer[starting],
             g: self.buffer[starting + 1],
             b: self.buffer[starting + 2],
             a: self.buffer[starting + 3],
-        };
+        }
     }
 
     ///
