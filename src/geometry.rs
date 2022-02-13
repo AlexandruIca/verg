@@ -90,6 +90,7 @@ pub fn get_bounding_coordinates(
     ((start_x, start_y), (end_x, end_y))
 }
 
+///
 /// https://www.petercollingridge.co.uk/tutorials/computational-geometry/line-line-intersections/
 ///
 /// \returns Line parameters `(t, s)`, `t` is for `start`, `s` is for `end`.

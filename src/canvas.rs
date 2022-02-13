@@ -1,5 +1,5 @@
 use crate::color::{Color, FillRule, FillStyle};
-use crate::geometry::{Point, Primitive, Shape};
+use crate::geometry::{intersect_line_with_grid, Point, Primitive, Shape};
 use std::vec::Vec;
 
 #[derive(Debug, Clone)]
@@ -106,26 +106,11 @@ impl Canvas {
     fn draw_line(&mut self, start: &Point, end: &Point) {
         let start = start.round_to_grid(self.desc.pixel_size);
         let end = end.round_to_grid(self.desc.pixel_size);
+        let points = intersect_line_with_grid(&start, &end, &self.desc);
 
-        self.buffer_set_at(
-            start.x.0,
-            start.y.0,
-            &Color {
-                r: 1.0_f64,
-                a: 1.0_f64,
-                ..Default::default()
-            },
-        );
-
-        self.buffer_set_at(
-            end.x.0,
-            end.y.0,
-            &Color {
-                r: 1.0_f64,
-                a: 1.0_f64,
-                ..Default::default()
-            },
-        );
+        for p in points {
+            self.buffer_set_at(p.x.0, p.y.0, &Color::default());
+        }
     }
 
     pub fn draw_shape(&mut self, shape: Shape, _fill_style: FillStyle, _fill_rule: FillRule) {
