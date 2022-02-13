@@ -41,6 +41,24 @@ fn basic_test() {
         FillRule::NonZero,
     );
 
+    canvas.draw_shape(
+        vec![Primitive::Line {
+            start: Point {
+                x: 380.0_f64,
+                y: 80.0_f64,
+            },
+            end: Point {
+                x: 200.0_f64,
+                y: 60.0_f64,
+            },
+        }],
+        FillStyle::Plain(Color {
+            r: 1.0_f64,
+            ..Default::default()
+        }),
+        FillRule::NonZero,
+    );
+
     let u8_buffer = canvas.to_u8();
 
     image::save_buffer(
