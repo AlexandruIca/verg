@@ -12,7 +12,7 @@ impl Default for Color {
             r: 0.0_f64,
             g: 0.0_f64,
             b: 0.0_f64,
-            a: 0.0_f64,
+            a: 1.0_f64,
         }
     }
 }
