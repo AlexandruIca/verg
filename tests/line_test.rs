@@ -15,9 +15,9 @@ fn basic_test() {
         width: WIDTH,
         height: HEIGHT,
         background_color: Color {
-            r: 0.5_f64,
-            g: 0.5_f64,
-            b: 0.5_f64,
+            r: 1.0_f64,
+            g: 1.0_f64,
+            b: 1.0_f64,
             a: 1.0_f64,
         },
         ..Default::default()
