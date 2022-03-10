@@ -7,7 +7,7 @@ use verg::{
 };
 
 #[test]
-fn basic_test() {
+fn line_test() {
     const WIDTH: usize = 500;
     const HEIGHT: usize = 500;
 
