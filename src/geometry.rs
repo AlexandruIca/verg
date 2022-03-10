@@ -177,6 +177,14 @@ fn index_to_line(
     }
 }
 
+fn is_horizontal_line(start: &GridPoint, end: &GridPoint) -> bool {
+    start.y.0 == end.y.0
+}
+
+fn is_vertical_line(start: &GridPoint, end: &GridPoint) -> bool {
+    start.x.0 == end.x.0
+}
+
 // This includes `b` in `acc` (it's meant to be used iteratively between many points for reuse).
 #[allow(clippy::many_single_char_names)]
 fn get_intersections_between_two_points(
@@ -186,6 +194,15 @@ fn get_intersections_between_two_points(
     acc: &mut Vec<GridPoint>,
     canvas: &CanvasDescription,
 ) {
+    let (is_horizontal, is_vertical) = (is_horizontal_line(a, b), is_vertical_line(a, b));
+
+    if is_horizontal && dir == IntersectionWith::Horizontals {
+        return acc.push(b.clone());
+    }
+    if is_vertical && dir == IntersectionWith::Verticals {
+        return acc.push(b.clone());
+    }
+
     let (x0, y0) = (a.x.0, a.y.0);
     let (x1, y1) = (b.x.0, b.y.0);
 
