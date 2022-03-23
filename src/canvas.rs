@@ -1,5 +1,5 @@
 use crate::color::{Color, FillRule, FillStyle};
-use crate::geometry::{intersect_line_with_grid, GridPoint, Point, Primitive, Shape};
+use crate::geometry::{intersect_line_with_grid, GridPoint, Path, PathOps, Point};
 use std::vec::Vec;
 
 #[derive(Debug, Clone)]
@@ -124,11 +124,33 @@ impl Canvas {
         });
     }
 
-    pub fn draw_shape(&mut self, shape: Shape, _fill_style: FillStyle, _fill_rule: FillRule) {
-        for primitive in shape.iter() {
-            match primitive {
-                Primitive::Line { start, end } => {
-                    self.draw_line(start, end);
+    pub fn draw_shape(&mut self, path: Path, _fill_style: FillStyle, _fill_rule: FillRule) {
+        let mut currently_at = Point {
+            x: 0.0_f64,
+            y: 0.0_f64,
+        };
+
+        for op in path.iter() {
+            match op {
+                PathOps::MoveTo { x, y } => {
+                    currently_at.x = *x;
+                    currently_at.y = *y;
+                }
+                PathOps::MoveToRel { x, y } => {
+                    currently_at.x += *x;
+                    currently_at.y += *y;
+                }
+                PathOps::LineTo { x, y } => {
+                    self.draw_line(&currently_at, &Point { x: *x, y: *y });
+                }
+                PathOps::LineToRel { x, y } => {
+                    self.draw_line(
+                        &currently_at,
+                        &Point {
+                            x: currently_at.x + *x,
+                            y: currently_at.y + *y,
+                        },
+                    );
                 }
             }
         }

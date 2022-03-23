@@ -3,7 +3,7 @@
 use verg::{
     canvas::{Canvas, CanvasDescription},
     color::{Color, FillRule, FillStyle},
-    geometry::{Point, Primitive},
+    geometry::PathOps,
 };
 
 #[test]
@@ -24,16 +24,16 @@ fn line_test() {
     });
 
     canvas.draw_shape(
-        vec![Primitive::Line {
-            start: Point {
+        vec![
+            PathOps::MoveTo {
                 x: 120.0_f64,
                 y: 120.0_f64,
             },
-            end: Point {
+            PathOps::LineTo {
                 x: 360.0_f64,
                 y: 360.0_f64,
             },
-        }],
+        ],
         FillStyle::Plain(Color {
             r: 1.0_f64,
             ..Default::default()
@@ -42,16 +42,16 @@ fn line_test() {
     );
 
     canvas.draw_shape(
-        vec![Primitive::Line {
-            start: Point {
+        vec![
+            PathOps::MoveTo {
                 x: 380.0_f64,
                 y: 80.0_f64,
             },
-            end: Point {
+            PathOps::LineTo {
                 x: 200.0_f64,
                 y: 60.0_f64,
             },
-        }],
+        ],
         FillStyle::Plain(Color {
             r: 1.0_f64,
             ..Default::default()
@@ -60,16 +60,16 @@ fn line_test() {
     );
 
     canvas.draw_shape(
-        vec![Primitive::Line {
-            start: Point {
+        vec![
+            PathOps::MoveTo {
                 x: 60.0_f64,
                 y: 20.0_f64,
             },
-            end: Point {
+            PathOps::LineTo {
                 x: 60.0_f64,
                 y: 300.0_f64,
             },
-        }],
+        ],
         FillStyle::Plain(Color {
             r: 1.0_f64,
             ..Default::default()
@@ -78,16 +78,16 @@ fn line_test() {
     );
 
     canvas.draw_shape(
-        vec![Primitive::Line {
-            start: Point {
+        vec![
+            PathOps::MoveTo {
                 x: 60.0_f64,
                 y: 350.0_f64,
             },
-            end: Point {
+            PathOps::LineTo {
                 x: 360.0_f64,
                 y: 350.0_f64,
             },
-        }],
+        ],
         FillStyle::Plain(Color {
             r: 1.0_f64,
             ..Default::default()
