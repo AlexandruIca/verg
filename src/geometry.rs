@@ -60,11 +60,14 @@ impl std::fmt::Display for GridPoint {
     }
 }
 
-pub enum Primitive {
-    Line { start: Point, end: Point },
+pub enum PathOps {
+    MoveTo { x: f64, y: f64 },
+    MoveToRel { x: f64, y: f64 },
+    LineTo { x: f64, y: f64 },
+    LineToRel { x: f64, y: f64 },
 }
 
-pub type Shape = Vec<Primitive>;
+pub type Path = Vec<PathOps>;
 
 ///
 /// Returns the starting and ending coordinates between which we need to iterate, so that
