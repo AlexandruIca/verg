@@ -2,7 +2,8 @@
 
 use verg::{
     canvas::{Canvas, CanvasDescription},
-    color::Color,
+    color::{Color, FillRule, FillStyle},
+    geometry::PathOps,
 };
 
 #[test]
@@ -10,7 +11,7 @@ fn basic_test() {
     const WIDTH: usize = 500;
     const HEIGHT: usize = 500;
 
-    let canvas = Canvas::new(CanvasDescription {
+    let mut canvas = Canvas::new(CanvasDescription {
         width: WIDTH,
         height: HEIGHT,
         background_color: Color {
@@ -24,6 +25,32 @@ fn basic_test() {
 
     assert_eq!(canvas.desc.width, WIDTH);
     assert_eq!(canvas.desc.height, HEIGHT);
+
+    canvas.draw_shape(
+        vec![
+            PathOps::MoveTo { x: 0.0, y: 0.0 },
+            PathOps::LineTo {
+                x: WIDTH as f64 - 1.0_f64,
+                y: 0.0,
+            },
+            PathOps::LineTo {
+                x: WIDTH as f64 - 1.0_f64,
+                y: HEIGHT as f64 - 1.0_f64,
+            },
+            PathOps::LineTo {
+                x: 0.0,
+                y: HEIGHT as f64 - 1.0_f64,
+            },
+            PathOps::Close,
+        ],
+        FillStyle::Plain(Color {
+            r: 0.3,
+            g: 0.2,
+            b: 0.3,
+            a: 1.0,
+        }),
+        FillRule::NonZero,
+    );
 
     let u8_buffer = canvas.to_u8();
 
