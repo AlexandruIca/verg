@@ -1,3 +1,13 @@
 .vscode/
 target/
 *.png
+
+*.pdf
+*.aux
+*.toc
+*.bbl
+*.bcf
+*.blg
+*.xml
+*.log
+*.gz
