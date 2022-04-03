@@ -1,4 +1,6 @@
-use crate::canvas::CanvasDescription;
+use crate::canvas::{AccumulationCell, Canvas, CanvasDescription};
+use core::num;
+use std::cmp;
 
 pub struct Point {
     pub x: f64,
@@ -16,7 +18,14 @@ impl Point {
             let pixel_length = 1_f64 / (pixel_size as f64);
             let cell_index = axis.fract() / pixel_length;
 
-            (axis.trunc() as i64, cell_index as i64)
+            let axis = axis.trunc() as i64;
+            let cell_index = cell_index.round().trunc() as i64;
+
+            if cell_index == 4 {
+                return (axis + 1, 0);
+            } else {
+                return (axis, cell_index);
+            }
         };
 
         GridPoint {
@@ -26,7 +35,7 @@ impl Point {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct GridPoint {
     pub x: (i64, i64),
     pub y: (i64, i64),
@@ -65,6 +74,7 @@ pub enum PathOps {
     MoveToRel { x: f64, y: f64 },
     LineTo { x: f64, y: f64 },
     LineToRel { x: f64, y: f64 },
+    Close,
 }
 
 pub type Path = Vec<PathOps>;
@@ -286,6 +296,120 @@ pub fn intersect_line_with_grid(
     on_verticals
 }
 
+fn intersect_line_with_pixel(
+    x: i64,
+    y: i64,
+    a: &GridPoint,
+    b: &GridPoint,
+    canvas: &CanvasDescription,
+) -> Option<(GridPoint, GridPoint)> {
+    let generate_line = |x_offset: (i64, i64), y_offset: (i64, i64)| -> (GridPoint, GridPoint) {
+        (
+            GridPoint {
+                x: (x + x_offset.0, 0),
+                y: (y + y_offset.0, 0),
+            },
+            GridPoint {
+                x: (x + x_offset.1, 0),
+                y: (y + y_offset.1, 0),
+            },
+        )
+    };
+
+    let pixel_lines: [(GridPoint, GridPoint); 4] = [
+        generate_line((0_i64, 0_i64), (1_i64, 0_i64)), // up
+        generate_line((0_i64, 1_i64), (1_i64, 1_i64)), // bottom
+        generate_line((1_i64, 0_i64), (1_i64, 1_i64)), // right
+        generate_line((0_i64, 0_i64), (0_i64, 1_i64)), // left
+    ];
+
+    let mut intersections: [GridPoint; 2] = [GridPoint {
+        x: (0_i64, 0_i64),
+        y: (0_i64, 0_i64),
+    }; 2_usize];
+    let mut num_intersections = 0_usize;
+
+    for l in pixel_lines {
+        let (t, s) = intersect_two_lines((a, b), (&l.0, &l.1), canvas.pixel_size);
+
+        if line_parameter_is_ok(t) && line_parameter_is_ok(s) {
+            let (ax, bx) = (l.0.x.0 as f64, l.1.x.0 as f64);
+            let (ay, by) = (l.0.y.0 as f64, l.1.y.0 as f64);
+            let new_point = Point {
+                x: ax + (bx - ax) * s,
+                y: ay + (by - ay) * s,
+            }
+            .round_to_grid(canvas.pixel_size);
+
+            if num_intersections < intersections.len() - 1_usize
+                && intersections[num_intersections].x != new_point.x
+                && intersections[num_intersections].y != new_point.y
+            {
+                num_intersections += 1_usize;
+                intersections[num_intersections] = new_point;
+            }
+        }
+    }
+
+    return match num_intersections {
+        0_usize => None,
+        1_usize => None,
+        2_usize => Some((intersections[0].clone(), intersections[1].clone())),
+        _ => panic!("Somehow a line intersects a pixel in 3 or more locations..."),
+    };
+}
+
+pub fn compute_trapezoidal_area(
+    min_x: i64,
+    min_y: i64,
+    a: GridPoint,
+    b: GridPoint,
+    canvas: &CanvasDescription,
+) -> i64 {
+    if is_vertical_line(&a, &b) || is_horizontal_line(&a, &b) {
+        return (canvas.pixel_size * canvas.pixel_size) as i64;
+    }
+
+    let intersection = intersect_line_with_pixel(min_x, min_y, &a, &b, &canvas);
+
+    if intersection.is_none() {
+        return 0_i64;
+    }
+
+    let (mut a, mut b) = intersection.unwrap();
+
+    if a.x.0 > min_x {
+        a.x = (a.x.0 - 1_i64, canvas.pixel_size as i64);
+    }
+    if a.y.0 > min_y {
+        a.y = (a.y.0 - 1_i64, canvas.pixel_size as i64);
+    }
+    if b.x.0 > min_x {
+        b.x = (b.x.0 - 1_i64, canvas.pixel_size as i64);
+    }
+    if b.y.0 > min_y {
+        b.y = (b.y.0 - 1_i64, canvas.pixel_size as i64);
+    }
+
+    if a.x == b.x {
+        // area to the left
+        let height = (b.y.1 - a.y.1).abs();
+        let width = a.x.1;
+        return width * height;
+    }
+    if a.y == b.y {
+        // area towards the `up` line
+        let width = (a.x.1 - b.x.1).abs();
+        let height = a.y.1;
+        return width * height;
+    }
+
+    let widths = a.x.1 + b.x.1;
+    let height = (b.y.1 - a.y.1).abs();
+
+    widths * height / 2_i64
+}
+
 #[test]
 fn test_intersections_with_grid() {
     let canvas_desc = CanvasDescription {
@@ -372,3 +496,34 @@ fn test_intersections_with_grid() {
         i += 1;
     }
 }
+
+/*
+#[test]
+fn test_trapezoidal_area() {
+    let canvas_desc = CanvasDescription {
+        pixel_size: 4,
+        width: 100,
+        height: 100,
+        ..Default::default()
+    };
+
+    let (a, b) = (
+        GridPoint {
+            x: (30, 0),
+            y: (30, 0),
+        },
+        GridPoint {
+            x: (40, 0),
+            y: (40, 0),
+        },
+    );
+
+    for i in 30..40 {
+        let area = compute_trapezoidal_area(i, i, a, b, &canvas_desc);
+        assert_eq!(
+            area,
+            (canvas_desc.pixel_size * canvas_desc.pixel_size) as i64 / 2_i64
+        );
+    }
+}
+*/
