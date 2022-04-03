@@ -10,6 +10,12 @@ use verg::{
 fn line_test() {
     const WIDTH: usize = 500;
     const HEIGHT: usize = 500;
+    let fill_color = Color {
+        r: 1.0_f64,
+        g: 0.0_f64,
+        b: 0.0_f64,
+        a: 1.0_f64,
+    };
 
     let mut canvas = Canvas::new(CanvasDescription {
         width: WIDTH,
@@ -34,10 +40,7 @@ fn line_test() {
                 y: 360.0_f64,
             },
         ],
-        FillStyle::Plain(Color {
-            r: 1.0_f64,
-            ..Default::default()
-        }),
+        FillStyle::Plain(fill_color),
         FillRule::NonZero,
     );
 
@@ -52,10 +55,21 @@ fn line_test() {
                 y: 60.0_f64,
             },
         ],
-        FillStyle::Plain(Color {
-            r: 1.0_f64,
-            ..Default::default()
-        }),
+        FillStyle::Plain(fill_color),
+        FillRule::NonZero,
+    );
+    canvas.draw_shape(
+        vec![
+            PathOps::MoveTo {
+                x: 200.0_f64,
+                y: 115.0_f64,
+            },
+            PathOps::LineTo {
+                x: 380.0_f64,
+                y: 120.0_f64,
+            },
+        ],
+        FillStyle::Plain(fill_color),
         FillRule::NonZero,
     );
 
@@ -70,10 +84,7 @@ fn line_test() {
                 y: 300.0_f64,
             },
         ],
-        FillStyle::Plain(Color {
-            r: 1.0_f64,
-            ..Default::default()
-        }),
+        FillStyle::Plain(fill_color),
         FillRule::NonZero,
     );
 
@@ -88,10 +99,22 @@ fn line_test() {
                 y: 350.0_f64,
             },
         ],
-        FillStyle::Plain(Color {
-            r: 1.0_f64,
-            ..Default::default()
-        }),
+        FillStyle::Plain(fill_color),
+        FillRule::NonZero,
+    );
+
+    canvas.draw_shape(
+        vec![
+            PathOps::MoveTo {
+                x: 140.0_f64,
+                y: 400.0_f64,
+            },
+            PathOps::LineTo {
+                x: 141.0_f64,
+                y: 490.0_f64,
+            },
+        ],
+        FillStyle::Plain(fill_color),
         FillRule::NonZero,
     );
 
