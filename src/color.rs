@@ -39,10 +39,32 @@ impl Default for Color {
     }
 }
 
+impl Color {
+    pub const fn coral() -> Self {
+        Self {
+            r: 1.0,
+            g: 0.498,
+            b: 0.313,
+            a: 1.0,
+        }
+    }
+
+    pub const fn dark_slate_blue() -> Self {
+        Self {
+            r: 0.282,
+            g: 0.239,
+            b: 0.545,
+            a: 1.0,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub enum FillStyle {
     Plain(Color),
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum FillRule {
     EvenOdd,
     NonZero,
