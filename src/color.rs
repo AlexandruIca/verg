@@ -6,7 +6,7 @@ pub struct Color {
     pub a: f64,
 }
 
-fn clamp_f64(v: f64, min: f64, max: f64) -> f64 {
+pub fn clamp<T: std::cmp::PartialOrd>(v: T, min: T, max: T) -> T {
     return if v < min {
         min
     } else if v > max {
@@ -20,10 +20,10 @@ impl Color {
     pub fn clamp(&self) -> Color {
         let (min, max) = (0.0_f64, 1.0_f64);
         Color {
-            r: clamp_f64(self.r, min, max),
-            g: clamp_f64(self.g, min, max),
-            b: clamp_f64(self.b, min, max),
-            a: clamp_f64(self.a, min, max),
+            r: clamp(self.r, min, max),
+            g: clamp(self.g, min, max),
+            b: clamp(self.b, min, max),
+            a: clamp(self.a, min, max),
         }
     }
 }

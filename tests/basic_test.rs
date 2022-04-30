@@ -15,10 +15,10 @@ fn basic_test() {
         width: WIDTH,
         height: HEIGHT,
         background_color: Color {
-            r: 1.0_f64,
-            g: 0.5_f64,
-            b: 0.5_f64,
-            a: 1.0_f64,
+            r: 1.0,
+            g: 0.5,
+            b: 0.5,
+            a: 1.0,
         },
         ..Default::default()
     });
@@ -30,16 +30,16 @@ fn basic_test() {
         vec![
             PathOps::MoveTo { x: 0.0, y: 0.0 },
             PathOps::LineTo {
-                x: WIDTH as f64 - 1.0_f64,
+                x: WIDTH as f64 - 1.0,
                 y: 0.0,
             },
             PathOps::LineTo {
-                x: WIDTH as f64 - 1.0_f64,
-                y: HEIGHT as f64 - 1.0_f64,
+                x: WIDTH as f64 - 1.0,
+                y: HEIGHT as f64 - 1.0,
             },
             PathOps::LineTo {
                 x: 0.0,
-                y: HEIGHT as f64 - 1.0_f64,
+                y: HEIGHT as f64 - 1.0,
             },
             PathOps::Close,
         ],

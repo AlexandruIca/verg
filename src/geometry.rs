@@ -1,6 +1,4 @@
-use crate::canvas::{AccumulationCell, Canvas, CanvasDescription};
-use core::num;
-use std::cmp;
+use crate::canvas::CanvasDescription;
 
 pub struct Point {
     pub x: f64,
@@ -496,34 +494,3 @@ fn test_intersections_with_grid() {
         i += 1;
     }
 }
-
-/*
-#[test]
-fn test_trapezoidal_area() {
-    let canvas_desc = CanvasDescription {
-        pixel_size: 4,
-        width: 100,
-        height: 100,
-        ..Default::default()
-    };
-
-    let (a, b) = (
-        GridPoint {
-            x: (30, 0),
-            y: (30, 0),
-        },
-        GridPoint {
-            x: (40, 0),
-            y: (40, 0),
-        },
-    );
-
-    for i in 30..40 {
-        let area = compute_trapezoidal_area(i, i, a, b, &canvas_desc);
-        assert_eq!(
-            area,
-            (canvas_desc.pixel_size * canvas_desc.pixel_size) as i64 / 2_i64
-        );
-    }
-}
-*/
