@@ -12,4 +12,4 @@ pub enum PathOps {
     Close,
 }
 
-pub type Path = Vec<PathOps>;
+pub type Path<'a> = &'a [PathOps];
