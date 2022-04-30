@@ -13,3 +13,21 @@ pub enum PathOps {
 }
 
 pub type Path<'a> = &'a [PathOps];
+
+pub struct BoundingBox {
+    pub min_x: usize,
+    pub min_y: usize,
+    pub max_x: usize,
+    pub max_y: usize,
+}
+
+impl Default for BoundingBox {
+    fn default() -> Self {
+        Self {
+            min_x: usize::MAX,
+            min_y: usize::MAX,
+            max_x: usize::MIN,
+            max_y: usize::MIN,
+        }
+    }
+}

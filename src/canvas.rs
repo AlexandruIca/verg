@@ -1,6 +1,6 @@
 use crate::color::{clamp, Color, FillRule, FillStyle};
-use crate::geometry::{Path, PathOps, Point};
-use crate::renderer::draw_line;
+use crate::geometry::Path;
+use crate::renderer::render_path;
 use std::vec::Vec;
 
 #[derive(Debug, Clone, Copy)]
@@ -96,106 +96,14 @@ impl Canvas {
     }
 
     pub fn draw_shape(&mut self, path: Path, fill_style: FillStyle, fill_rule: FillRule) {
-        let (mut min_x, mut min_y) = (usize::MAX, usize::MAX);
-        let (mut max_x, mut max_y) = (usize::MIN, usize::MIN);
+        let bounds = render_path(&mut self.accumulation_buffer, &self.desc, path);
 
-        let mut update_bounds = |x: f64, y: f64| {
-            let x = x as usize;
-            let y = y as usize;
-
-            min_x = usize::min(min_x, x);
-            min_y = usize::min(min_y, y);
-
-            max_x = usize::max(max_x, x);
-            max_y = usize::max(max_y, y);
-        };
-
-        let mut start_point = Point {
-            x: 0.0_f64,
-            y: 0.0_f64,
-        };
-        let mut currently_at = Point {
-            x: 0.0_f64,
-            y: 0.0_f64,
-        };
-
-        let mut line_id = 0;
-
-        for op in path.iter() {
-            match op {
-                PathOps::MoveTo { x, y } => {
-                    currently_at.x = *x;
-                    currently_at.y = *y;
-
-                    start_point.x = *x;
-                    start_point.y = *y;
-
-                    update_bounds(*x, *y);
-                }
-                PathOps::MoveToRel { x, y } => {
-                    currently_at.x += *x;
-                    currently_at.y += *y;
-
-                    start_point.x = currently_at.x;
-                    start_point.y = currently_at.y;
-
-                    update_bounds(currently_at.x, currently_at.y);
-                }
-                PathOps::LineTo { x, y } => {
-                    line_id += 1;
-                    draw_line(
-                        &mut self.accumulation_buffer,
-                        &self.desc,
-                        &currently_at,
-                        &Point { x: *x, y: *y },
-                        line_id,
-                    );
-
-                    currently_at.x = *x;
-                    currently_at.y = *y;
-
-                    update_bounds(*x, *y);
-                }
-                PathOps::LineToRel { x, y } => {
-                    line_id += 1;
-                    draw_line(
-                        &mut self.accumulation_buffer,
-                        &self.desc,
-                        &currently_at,
-                        &Point {
-                            x: currently_at.x + *x,
-                            y: currently_at.y + *y,
-                        },
-                        line_id,
-                    );
-
-                    currently_at.x += *x;
-                    currently_at.y += *y;
-
-                    update_bounds(currently_at.x, currently_at.y);
-                }
-                PathOps::Close => {
-                    line_id += 1;
-                    draw_line(
-                        &mut self.accumulation_buffer,
-                        &self.desc,
-                        &currently_at,
-                        &start_point,
-                        line_id,
-                    );
-
-                    currently_at.x = start_point.x;
-                    currently_at.y = start_point.y;
-                }
-            }
-        }
-
-        for y in min_y..=max_y {
+        for y in bounds.min_y..=bounds.max_y {
             let mut acc = 0.0_f32;
             let mut filling = -1.0_f32;
             let mut prev_cell = AccumulationCell { area: 0.0, id: 0 };
 
-            for x in min_x..max_x {
+            for x in bounds.min_x..bounds.max_x {
                 let cell = &mut self.accumulation_buffer[y * self.desc.width + x];
                 let area = cell.area;
 

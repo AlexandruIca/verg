@@ -1,6 +1,6 @@
 use crate::{
     canvas::{AccumulationCell, CanvasDescription},
-    geometry::Point,
+    geometry::{BoundingBox, Path, PathOps, Point},
 };
 
 fn update_cell(area: f32, cell: &mut AccumulationCell, id: i32) {
@@ -118,4 +118,104 @@ pub fn draw_line(
         }
         x = xnext;
     }
+}
+
+pub fn render_path(
+    accumulation_buffer: &mut [AccumulationCell],
+    desc: &CanvasDescription,
+    path: Path,
+) -> BoundingBox {
+    let mut result = BoundingBox::default();
+    let mut update_bounds = |x: f64, y: f64| {
+        let x = x as usize;
+        let y = y as usize;
+
+        result.min_x = usize::min(result.min_x, x);
+        result.min_y = usize::min(result.min_y, y);
+
+        result.max_x = usize::max(result.max_x, x);
+        result.max_y = usize::max(result.max_y, y);
+    };
+
+    let mut start_point = Point {
+        x: 0.0_f64,
+        y: 0.0_f64,
+    };
+    let mut currently_at = Point {
+        x: 0.0_f64,
+        y: 0.0_f64,
+    };
+
+    let mut line_id = 0;
+
+    for op in path.iter() {
+        match op {
+            PathOps::MoveTo { x, y } => {
+                currently_at.x = *x;
+                currently_at.y = *y;
+
+                start_point.x = *x;
+                start_point.y = *y;
+
+                update_bounds(*x, *y);
+            }
+            PathOps::MoveToRel { x, y } => {
+                currently_at.x += *x;
+                currently_at.y += *y;
+
+                start_point.x = currently_at.x;
+                start_point.y = currently_at.y;
+
+                update_bounds(currently_at.x, currently_at.y);
+            }
+            PathOps::LineTo { x, y } => {
+                line_id += 1;
+                draw_line(
+                    accumulation_buffer,
+                    &desc,
+                    &currently_at,
+                    &Point { x: *x, y: *y },
+                    line_id,
+                );
+
+                currently_at.x = *x;
+                currently_at.y = *y;
+
+                update_bounds(*x, *y);
+            }
+            PathOps::LineToRel { x, y } => {
+                line_id += 1;
+                draw_line(
+                    accumulation_buffer,
+                    &desc,
+                    &currently_at,
+                    &Point {
+                        x: currently_at.x + *x,
+                        y: currently_at.y + *y,
+                    },
+                    line_id,
+                );
+
+                currently_at.x += *x;
+                currently_at.y += *y;
+
+                update_bounds(currently_at.x, currently_at.y);
+            }
+            PathOps::Close => {
+                line_id += 1;
+                draw_line(
+                    accumulation_buffer,
+                    &desc,
+                    &currently_at,
+                    &start_point,
+                    line_id,
+                );
+
+                currently_at.x = start_point.x;
+                currently_at.y = start_point.y;
+            }
+        }
+    }
+
+    return result;
 }
