@@ -6,7 +6,7 @@ use sha2::{Digest, Sha256};
 pub const REFERENCE_HASHES: [(&str, &str); 5] = [
     (
         "basic_test",
-        "4C722C996AA40BB673FB5EA5A04812DFAB5F9BDC4412B565250304A7B90AF9A6",
+        "95AEB28CB13578C558F745AD4DFCE5DF3BCAD3E11C0C9F15077ED3144C6D4D98",
     ),
     (
         "even_odd_fill_test",
@@ -34,7 +34,7 @@ pub fn get_hash_for_color_buffer(buffer: &[u8]) -> String {
 
 #[macro_export]
 macro_rules! implement_test {
-    ( $($name:ident, $canvas:ident)?| $($path:expr, $fill_style:expr, $fill_rule:expr),* ) => {
+    ( $($name:ident, $canvas:ident)?| $($path:expr, $fill_style:expr, $fill_rule:expr)* ) => {
         #[test]
         fn $($name)?() {
             let mut canvas = Canvas::new($($canvas)?());
@@ -43,6 +43,16 @@ macro_rules! implement_test {
             )*
 
             let u8_buffer = canvas.to_u8();
+
+            image::save_buffer(
+                format!("{}.png", stringify!($($name)?)),
+                u8_buffer.as_slice(),
+                canvas.desc.width as u32,
+                canvas.desc.height as u32,
+                image::ColorType::Rgba8,
+            )
+            .unwrap();
+
             {
                 let hash = common::get_hash_for_color_buffer(&u8_buffer);
                 let mut hash_found = false;
@@ -65,15 +75,6 @@ macro_rules! implement_test {
                     assert!(false);
                 }
             }
-
-            image::save_buffer(
-                format!("{}.png", stringify!($($name)?)),
-                u8_buffer.as_slice(),
-                canvas.desc.width as u32,
-                canvas.desc.height as u32,
-                image::ColorType::Rgba8,
-            )
-            .unwrap();
         }
     }
 }
