@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use crate::{
     canvas::{AccumulationCell, CanvasDescription},
     color::{clamp, Color, FillRule, FillStyle},
@@ -175,7 +177,7 @@ pub fn render_path(
                 line_id += 1;
                 draw_line(
                     accumulation_buffer,
-                    &desc,
+                    desc,
                     &currently_at,
                     &Point { x: *x, y: *y },
                     line_id,
@@ -190,7 +192,7 @@ pub fn render_path(
                 line_id += 1;
                 draw_line(
                     accumulation_buffer,
-                    &desc,
+                    desc,
                     &currently_at,
                     &Point {
                         x: currently_at.x + *x,
@@ -208,7 +210,7 @@ pub fn render_path(
                 line_id += 1;
                 draw_line(
                     accumulation_buffer,
-                    &desc,
+                    desc,
                     &currently_at,
                     &start_point,
                     line_id,
@@ -220,7 +222,7 @@ pub fn render_path(
         }
     }
 
-    return result;
+    result
 }
 
 fn alpha_fill_even_odd(
@@ -238,10 +240,12 @@ fn alpha_fill_even_odd(
         *acc += *filling * cell.area.abs();
 
         if *acc < 0.0 || *acc > 1.0 {
-            *acc = (!(*filling > 0.0) as i32) as f32;
+            let is_filling = filling.partial_cmp(&&mut 0.0_f32) != Some(Ordering::Greater);
+            *acc = (is_filling as i32) as f32;
         }
     } else {
-        *acc = ((*filling > 0.0) as i32) as f32;
+        let is_filling = filling.partial_cmp(&&mut 0.0_f32) == Some(Ordering::Greater);
+        *acc = (is_filling as i32) as f32;
     }
 
     clamp(acc.abs(), 0.0, 1.0)

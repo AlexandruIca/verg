@@ -7,13 +7,13 @@ pub struct Color {
 }
 
 pub fn clamp<T: std::cmp::PartialOrd>(v: T, min: T, max: T) -> T {
-    return if v < min {
+    if v < min {
         min
     } else if v > max {
         max
     } else {
         v
-    };
+    }
 }
 
 impl Color {
