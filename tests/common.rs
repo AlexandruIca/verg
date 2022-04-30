@@ -22,7 +22,7 @@ pub const REFERENCE_HASHES: [(&str, &str); 5] = [
     ),
     (
         "triangle_test",
-        "D3286188C222938DAF15C775F64A11ED846B6552B599B4CE0B7855715514DFAD",
+        "765A7406D707AF35C371B3505B0688C51FB11B42BBB5B46233EAA445A2F28675",
     ),
 ];
 
@@ -34,7 +34,7 @@ pub fn get_hash_for_color_buffer(buffer: &[u8]) -> String {
 
 #[macro_export]
 macro_rules! implement_test {
-    ( $($name:ident, $canvas:ident)?| $($path:expr, $fill_style:expr, $fill_rule:expr)* ) => {
+    ( $($name:ident, $canvas:ident)? | $($path:expr, $fill_style:expr, $fill_rule:expr),* ) => {
         #[test]
         fn $($name)?() {
             let mut canvas = Canvas::new($($canvas)?());
