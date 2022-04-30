@@ -39,7 +39,7 @@ macro_rules! implement_test {
         fn $($name)?() {
             let mut canvas = Canvas::new($($canvas)?());
             $(
-                canvas.draw_shape($path.to_vec(), $fill_style, $fill_rule);
+                canvas.draw_shape(&($path), $fill_style, $fill_rule);
             )*
 
             let u8_buffer = canvas.to_u8();
