@@ -1,7 +1,10 @@
 use crate::{
     canvas::{AccumulationCell, CanvasDescription},
+    color::{clamp, Color, FillRule, FillStyle},
     geometry::{BoundingBox, Path, PathOps, Point},
 };
+
+pub const NUM_CHANNELS: usize = 4;
 
 fn update_cell(area: f32, cell: &mut AccumulationCell, id: i32) {
     cell.area += area;
@@ -218,4 +221,72 @@ pub fn render_path(
     }
 
     return result;
+}
+
+pub fn fill_path(
+    accumulation_buffer: &mut [AccumulationCell],
+    color_buffer: &mut [f64],
+    desc: &CanvasDescription,
+    fill_style: FillStyle,
+    fill_rule: FillRule,
+    bounds: &BoundingBox,
+) {
+    for y in bounds.min_y..=bounds.max_y {
+        let mut acc = 0.0_f32;
+        let mut filling = -1.0_f32;
+        let mut prev_cell = AccumulationCell { area: 0.0, id: 0 };
+
+        for x in bounds.min_x..bounds.max_x {
+            let cell = &mut accumulation_buffer[y * desc.width + x];
+            let area = cell.area;
+
+            let alpha = match fill_rule {
+                FillRule::EvenOdd => {
+                    if cell.id > 0 && cell.id != prev_cell.id {
+                        prev_cell.id = cell.id;
+                        filling = -filling;
+                    }
+
+                    if cell.id == prev_cell.id {
+                        acc += filling * area.abs();
+
+                        if acc < 0.0 || acc > 1.0 {
+                            acc = (!(filling > 0.0) as i32) as f32;
+                        }
+                    } else {
+                        acc = ((filling > 0.0) as i32) as f32;
+                    }
+
+                    clamp(acc.abs(), 0.0, 1.0)
+                }
+                FillRule::NonZero => {
+                    acc += area;
+                    acc.abs()
+                }
+            };
+
+            cell.area = 0.0_f32;
+
+            let pixel_offset: usize = y * desc.width * NUM_CHANNELS + x * NUM_CHANNELS;
+            let dest = Color {
+                r: color_buffer[pixel_offset],
+                g: color_buffer[pixel_offset + 1],
+                b: color_buffer[pixel_offset + 2],
+                a: color_buffer[pixel_offset + 3],
+            };
+            let src = match fill_style {
+                FillStyle::Plain(Color { r, g, b, a: _ }) => Color {
+                    r,
+                    g,
+                    b,
+                    a: alpha as f64,
+                },
+            };
+
+            color_buffer[pixel_offset] = src.r * src.a + dest.r * (1.0 - src.a);
+            color_buffer[pixel_offset + 1] = src.g * src.a + dest.g * (1.0 - src.a);
+            color_buffer[pixel_offset + 2] = src.b * src.a + dest.b * (1.0 - src.a);
+            color_buffer[pixel_offset + 3] = dest.a;
+        }
+    }
 }
