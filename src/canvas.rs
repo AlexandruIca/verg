@@ -74,18 +74,7 @@ impl Canvas {
             .collect::<Vec<u8>>();
     }
 
-    fn _buffer_set_at(&mut self, x: i64, y: i64, color: &Color) {
-        let xu = x as usize;
-        let yu = y as usize;
-        let starting: usize = yu * self.desc.width * NUM_CHANNELS + xu * NUM_CHANNELS;
-
-        self.buffer[starting] = color.r;
-        self.buffer[starting + 1] = color.g;
-        self.buffer[starting + 2] = color.b;
-        self.buffer[starting + 3] = color.a;
-    }
-
-    fn buffer_set_at_usize(&mut self, x: usize, y: usize, color: &Color) {
+    fn buffer_set_at(&mut self, x: usize, y: usize, color: &Color) {
         let starting: usize = y * self.desc.width * NUM_CHANNELS + x * NUM_CHANNELS;
 
         self.buffer[starting] = color.r;
@@ -94,20 +83,7 @@ impl Canvas {
         self.buffer[starting + 3] = color.a;
     }
 
-    fn _buffer_get_at(&self, x: i64, y: i64) -> Color {
-        let xu = x as usize;
-        let yu = y as usize;
-        let starting: usize = yu * self.desc.width * NUM_CHANNELS + xu * NUM_CHANNELS;
-
-        Color {
-            r: self.buffer[starting],
-            g: self.buffer[starting + 1],
-            b: self.buffer[starting + 2],
-            a: self.buffer[starting + 3],
-        }
-    }
-
-    fn buffer_get_at_usize(&self, x: usize, y: usize) -> Color {
+    fn buffer_get_at(&self, x: usize, y: usize) -> Color {
         let starting: usize = y * self.desc.width * NUM_CHANNELS + x * NUM_CHANNELS;
 
         Color {
@@ -116,11 +92,6 @@ impl Canvas {
             b: self.buffer[starting + 2],
             a: self.buffer[starting + 3],
         }
-    }
-
-    fn accumulation_buffer_set_at(&mut self, x: i64, y: i64, _area: i64) {
-        let _xu = x as usize;
-        let _yu = y as usize;
     }
 
     ///
@@ -343,7 +314,7 @@ impl Canvas {
 
                 cell.area = 0.0_f32;
 
-                let dest = self.buffer_get_at_usize(x, y);
+                let dest = self.buffer_get_at(x, y);
                 let src = match fill_style {
                     FillStyle::Plain(Color { r, g, b, a: _ }) => Color {
                         r,
@@ -353,7 +324,7 @@ impl Canvas {
                     },
                 };
 
-                self.buffer_set_at_usize(
+                self.buffer_set_at(
                     x,
                     y,
                     &Color {
