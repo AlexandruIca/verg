@@ -1,5 +1,6 @@
 use crate::color::{clamp, Color, FillRule, FillStyle};
 use crate::geometry::{Path, PathOps, Point};
+use crate::renderer::draw_line;
 use std::vec::Vec;
 
 #[derive(Debug, Clone, Copy)]
@@ -94,109 +95,6 @@ impl Canvas {
         }
     }
 
-    ///
-    /// # Note
-    ///
-    /// Expects `start` and `end` to be lexicographically sorted (by `x` and `y`).
-    ///
-    /// Bresenham's line drawing algorithm, adapted from here:
-    /// - https://github.com/ssloy/tinyrenderer/wiki/Lesson-1:-Bresenham%E2%80%99s-Line-Drawing-Algorithm
-    ///
-    /// Line drawing algorithm taken from here:
-    /// - https://medium.com/@raphlinus/inside-the-fastest-font-renderer-in-the-world-75ae5270c445
-    ///
-    fn draw_line(&mut self, start: &Point, end: &Point, id: i32) {
-        let update = |area: f32, cell: &mut AccumulationCell| {
-            cell.area += area;
-            cell.id = id;
-        };
-        let p0 = start;
-        let p1 = end;
-
-        if (p0.y - p1.y).abs() <= f64::EPSILON {
-            return;
-        }
-        let (dir, p0, p1) = if p0.y < p1.y {
-            (1.0, p0, p1)
-        } else {
-            (-1.0, p1, p0)
-        };
-        let dxdy = (p1.x - p0.x) / (p1.y - p0.y);
-        let mut x = p0.x;
-        let y0 = p0.y as usize;
-
-        for y in y0..self.desc.height.min(p1.y.ceil() as usize) {
-            let linestart = y * self.desc.width;
-            let dy = ((y + 1) as f64).min(p1.y) - (y as f64).max(p0.y);
-            let xnext = x + dxdy * dy;
-            let d = dy * dir;
-            let (x0, x1) = if x < xnext { (x, xnext) } else { (xnext, x) };
-            let x0floor = x0.floor();
-            let x0i = x0floor as i32;
-            let x1ceil = x1.ceil();
-            let x1i = x1ceil as i32;
-            if x1i <= x0i + 1 {
-                let xmf = 0.5 * (x + xnext) - x0floor;
-                let linestart_x0i = linestart as isize + x0i as isize;
-                if linestart_x0i < 0 {
-                    continue; // oob index
-                }
-                update(
-                    (d - d * xmf) as f32,
-                    &mut self.accumulation_buffer[linestart_x0i as usize],
-                );
-                update(
-                    (d * xmf) as f32,
-                    &mut self.accumulation_buffer[linestart_x0i as usize + 1],
-                );
-            } else {
-                let s = (x1 - x0).recip();
-                let x0f = x0 - x0floor;
-                let a0 = 0.5 * s * (1.0 - x0f) * (1.0 - x0f);
-                let x1f = x1 - x1ceil + 1.0;
-                let am = 0.5 * s * x1f * x1f;
-                let linestart_x0i = linestart as isize + x0i as isize;
-                if linestart_x0i < 0 {
-                    continue; // oob index
-                }
-                update(
-                    (d * a0) as f32,
-                    &mut self.accumulation_buffer[linestart_x0i as usize],
-                );
-
-                if x1i == x0i + 2 {
-                    update(
-                        (d * (1.0 - a0 - am)) as f32,
-                        &mut self.accumulation_buffer[linestart_x0i as usize + 1],
-                    );
-                } else {
-                    let a1 = s * (1.5 - x0f);
-                    update(
-                        (d * (a1 - a0)) as f32,
-                        &mut self.accumulation_buffer[linestart_x0i as usize + 1],
-                    );
-
-                    for xi in x0i + 2..x1i - 1 {
-                        update(
-                            (d * s) as f32,
-                            &mut self.accumulation_buffer[linestart + xi as usize],
-                        );
-                    }
-                    let a2 = a1 + (x1i - x0i - 3) as f64 * s;
-                    update(
-                        (d * (1.0 - a2 - am)) as f32,
-                        &mut self.accumulation_buffer[linestart + (x1i - 1) as usize],
-                    );
-                }
-                update(
-                    (d * am) as f32,
-                    &mut self.accumulation_buffer[linestart + x1i as usize],
-                );
-            }
-            x = xnext;
-        }
-    }
-
     pub fn draw_shape(&mut self, path: Path, fill_style: FillStyle, fill_rule: FillRule) {
         let (mut min_x, mut min_y) = (usize::MAX, usize::MAX);
         let (mut max_x, mut max_y) = (usize::MIN, usize::MIN);
@@ -245,7 +143,13 @@ impl Canvas {
                 }
                 PathOps::LineTo { x, y } => {
                     line_id += 1;
-                    self.draw_line(&currently_at, &Point { x: *x, y: *y }, line_id);
+                    draw_line(
+                        &mut self.accumulation_buffer,
+                        &self.desc,
+                        &currently_at,
+                        &Point { x: *x, y: *y },
+                        line_id,
+                    );
 
                     currently_at.x = *x;
                     currently_at.y = *y;
@@ -254,7 +158,9 @@ impl Canvas {
                 }
                 PathOps::LineToRel { x, y } => {
                     line_id += 1;
-                    self.draw_line(
+                    draw_line(
+                        &mut self.accumulation_buffer,
+                        &self.desc,
                         &currently_at,
                         &Point {
                             x: currently_at.x + *x,
@@ -270,7 +176,13 @@ impl Canvas {
                 }
                 PathOps::Close => {
                     line_id += 1;
-                    self.draw_line(&currently_at, &start_point, line_id);
+                    draw_line(
+                        &mut self.accumulation_buffer,
+                        &self.desc,
+                        &currently_at,
+                        &start_point,
+                        line_id,
+                    );
 
                     currently_at.x = start_point.x;
                     currently_at.y = start_point.y;
