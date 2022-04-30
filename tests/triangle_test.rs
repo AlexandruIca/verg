@@ -13,12 +13,7 @@ fn canvas_description() -> CanvasDescription {
     CanvasDescription {
         width: WIDTH,
         height: HEIGHT,
-        background_color: Color {
-            r: 0.0,
-            g: 0.0,
-            b: 0.0,
-            a: 1.0,
-        },
+        background_color: Color::black(),
         ..Default::default()
     }
 }
@@ -37,12 +32,7 @@ const SMALL_WHITE_TRIANGLE: [PathOps; 4] = [
     PathOps::Close,
 ];
 
-const FILL_WHITE: FillStyle = FillStyle::Plain(Color {
-    r: 1.0,
-    g: 1.0,
-    b: 1.0,
-    a: 1.0,
-});
+const FILL_WHITE: FillStyle = FillStyle::Plain(Color::white());
 
 const RED_TRIANGLES: [PathOps; 8] = [
     PathOps::MoveTo { x: 100.0, y: 50.0 },
@@ -55,12 +45,7 @@ const RED_TRIANGLES: [PathOps; 8] = [
     PathOps::Close,
 ];
 
-const FILL_RED: FillStyle = FillStyle::Plain(Color {
-    r: 0.8,
-    g: 0.1,
-    b: 0.3,
-    a: 1.0,
-});
+const FILL_RED: FillStyle = FillStyle::Plain(Color::crimson());
 
 const BLUE_RECT: [PathOps; 8] = [
     PathOps::MoveTo { x: 10.0, y: 10.0 },
@@ -73,12 +58,7 @@ const BLUE_RECT: [PathOps; 8] = [
     PathOps::Close,
 ];
 
-const FILL_BLUE: FillStyle = FillStyle::Plain(Color {
-    r: 0.0,
-    g: 0.0,
-    b: 1.0,
-    a: 1.0,
-});
+const FILL_BLUE: FillStyle = FillStyle::Plain(Color::blue());
 
 const IMPERFECT_RECT_PART1: [PathOps; 4] = [
     PathOps::MoveTo { x: 400.0, y: 10.0 },
@@ -94,12 +74,7 @@ const IMPERFECT_RECT_PART2: [PathOps; 4] = [
     PathOps::Close,
 ];
 
-const FILL_CYAN: FillStyle = FillStyle::Plain(Color {
-    r: 0.0,
-    g: 1.0,
-    b: 1.0,
-    a: 1.0,
-});
+const FILL_CYAN: FillStyle = FillStyle::Plain(Color::cyan());
 
 const DIAMOND: [PathOps; 8] = [
     PathOps::MoveTo { x: 50.0, y: 350.0 },
@@ -112,12 +87,7 @@ const DIAMOND: [PathOps; 8] = [
     PathOps::Close,
 ];
 
-const FILL_DIAMOND: FillStyle = FillStyle::Plain(Color {
-    r: 0.1,
-    g: 0.6,
-    b: 0.1,
-    a: 1.0,
-});
+const FILL_DIAMOND: FillStyle = FillStyle::Plain(Color::forest_green());
 
 const SMALL_PURPLE_TRIANGLE: [PathOps; 4] = [
     PathOps::MoveTo { x: 300.0, y: 400.0 },
@@ -126,12 +96,7 @@ const SMALL_PURPLE_TRIANGLE: [PathOps; 4] = [
     PathOps::Close,
 ];
 
-const FILL_PURPLE: FillStyle = FillStyle::Plain(Color {
-    r: 0.3,
-    g: 0.1,
-    b: 0.5,
-    a: 1.0,
-});
+const FILL_PURPLE: FillStyle = FillStyle::Plain(Color::dark_slate_blue());
 
 const FILL_RULE: FillRule = FillRule::NonZero;
 

@@ -7,13 +7,13 @@ pub struct Color {
 }
 
 pub fn clamp<T: std::cmp::PartialOrd>(v: T, min: T, max: T) -> T {
-    return if v < min {
+    if v < min {
         min
     } else if v > max {
         max
     } else {
         v
-    };
+    }
 }
 
 impl Color {
@@ -39,10 +39,95 @@ impl Default for Color {
     }
 }
 
+impl Color {
+    pub const fn black() -> Self {
+        Self {
+            r: 0.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0,
+        }
+    }
+
+    pub const fn white() -> Self {
+        Self {
+            r: 1.0,
+            g: 1.0,
+            b: 1.0,
+            a: 1.0,
+        }
+    }
+
+    pub const fn red() -> Self {
+        Self {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0,
+        }
+    }
+
+    pub const fn blue() -> Self {
+        Self {
+            r: 0.0,
+            g: 0.0,
+            b: 1.0,
+            a: 1.0,
+        }
+    }
+
+    pub const fn cyan() -> Self {
+        Self {
+            r: 0.0,
+            g: 1.0,
+            b: 1.0,
+            a: 1.0,
+        }
+    }
+
+    pub const fn coral() -> Self {
+        Self {
+            r: 1.0,
+            g: 0.498,
+            b: 0.313,
+            a: 1.0,
+        }
+    }
+
+    pub const fn dark_slate_blue() -> Self {
+        Self {
+            r: 0.282,
+            g: 0.239,
+            b: 0.545,
+            a: 1.0,
+        }
+    }
+
+    pub const fn crimson() -> Self {
+        Self {
+            r: 0.862,
+            g: 0.078,
+            b: 0.235,
+            a: 1.0,
+        }
+    }
+
+    pub const fn forest_green() -> Self {
+        Self {
+            r: 0.133,
+            g: 0.545,
+            b: 0.133,
+            a: 1.0,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub enum FillStyle {
     Plain(Color),
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum FillRule {
     EvenOdd,
     NonZero,

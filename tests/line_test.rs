@@ -15,12 +15,7 @@ fn canvas_description() -> CanvasDescription {
     CanvasDescription {
         width: WIDTH,
         height: HEIGHT,
-        background_color: Color {
-            r: 1.0,
-            g: 1.0,
-            b: 1.0,
-            a: 1.0,
-        },
+        background_color: Color::white(),
         ..Default::default()
     }
 }
@@ -52,12 +47,7 @@ const LINES: [[PathOps; 2]; 6] = [
     ],
 ];
 
-const FILL_STYLE: FillStyle = FillStyle::Plain(Color {
-    r: 1.0,
-    g: 0.0,
-    b: 0.0,
-    a: 1.0,
-});
+const FILL_STYLE: FillStyle = FillStyle::Plain(Color::red());
 
 const FILL_RULE: FillRule = FillRule::NonZero;
 
