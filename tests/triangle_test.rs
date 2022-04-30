@@ -4,18 +4,13 @@ use verg::canvas::{Canvas, CanvasDescription};
 use verg::color::{Color, FillRule, FillStyle};
 use verg::geometry::PathOps;
 
-#[test]
-fn triangle_test() {
-    const WIDTH: usize = 500;
-    const HEIGHT: usize = 500;
-    let fill_color = Color {
-        r: 1.0,
-        g: 1.0,
-        b: 1.0,
-        a: 1.0,
-    };
+mod common;
 
-    let mut canvas = Canvas::new(CanvasDescription {
+const WIDTH: usize = 500;
+const HEIGHT: usize = 500;
+
+fn canvas_description() -> CanvasDescription {
+    CanvasDescription {
         width: WIDTH,
         height: HEIGHT,
         background_color: Color {
@@ -25,153 +20,129 @@ fn triangle_test() {
             a: 1.0,
         },
         ..Default::default()
-    });
+    }
+}
 
-    // Big triangle
-    canvas.draw_shape(
-        vec![
-            PathOps::MoveTo { x: 60.0, y: 240.0 },
-            PathOps::LineTo { x: 360.0, y: 80.0 },
-            PathOps::LineTo { x: 400.0, y: 280.0 },
-            PathOps::Close,
-        ],
-        FillStyle::Plain(fill_color),
-        FillRule::NonZero,
-    );
+const BIG_TRIANGLE: [PathOps; 4] = [
+    PathOps::MoveTo { x: 60.0, y: 240.0 },
+    PathOps::LineTo { x: 360.0, y: 80.0 },
+    PathOps::LineTo { x: 400.0, y: 280.0 },
+    PathOps::Close,
+];
 
-    // Small white triangle
-    canvas.draw_shape(
-        vec![
-            PathOps::MoveTo { x: 100.0, y: 150.0 },
-            PathOps::LineTo { x: 100.0, y: 110.0 },
-            PathOps::LineTo { x: 150.0, y: 110.0 },
-            PathOps::Close,
-        ],
-        FillStyle::Plain(fill_color),
-        FillRule::NonZero,
-    );
+const SMALL_WHITE_TRIANGLE: [PathOps; 4] = [
+    PathOps::MoveTo { x: 100.0, y: 150.0 },
+    PathOps::LineTo { x: 100.0, y: 110.0 },
+    PathOps::LineTo { x: 150.0, y: 110.0 },
+    PathOps::Close,
+];
 
-    // Red triangles
-    canvas.draw_shape(
-        vec![
-            PathOps::MoveTo { x: 100.0, y: 50.0 },
-            PathOps::LineTo { x: 100.0, y: 10.0 },
-            PathOps::LineTo { x: 150.0, y: 10.0 },
-            PathOps::Close,
-            PathOps::MoveTo { x: 250.0, y: 50.0 },
-            PathOps::LineTo { x: 300.0, y: 50.0 },
-            PathOps::LineTo { x: 300.0, y: 10.0 },
-            PathOps::Close,
-        ],
-        FillStyle::Plain(Color {
-            r: 0.8,
-            g: 0.1,
-            b: 0.3,
-            a: 1.0,
-        }),
-        FillRule::NonZero,
-    );
+const FILL_WHITE: FillStyle = FillStyle::Plain(Color {
+    r: 1.0,
+    g: 1.0,
+    b: 1.0,
+    a: 1.0,
+});
 
-    // Blue rect
-    canvas.draw_shape(
-        vec![
-            PathOps::MoveTo { x: 10.0, y: 10.0 },
-            PathOps::LineTo { x: 10.0, y: 50.0 },
-            PathOps::LineTo { x: 50.0, y: 10.0 },
-            PathOps::Close,
-            PathOps::MoveTo { x: 10.0, y: 50.0 },
-            PathOps::LineTo { x: 50.0, y: 50.0 },
-            PathOps::LineTo { x: 50.0, y: 10.0 },
-            PathOps::Close,
-        ],
-        FillStyle::Plain(Color {
-            r: 0.0,
-            g: 0.0,
-            b: 1.0,
-            a: 1.0,
-        }),
-        FillRule::NonZero,
-    );
+const RED_TRIANGLES: [PathOps; 8] = [
+    PathOps::MoveTo { x: 100.0, y: 50.0 },
+    PathOps::LineTo { x: 100.0, y: 10.0 },
+    PathOps::LineTo { x: 150.0, y: 10.0 },
+    PathOps::Close,
+    PathOps::MoveTo { x: 250.0, y: 50.0 },
+    PathOps::LineTo { x: 300.0, y: 50.0 },
+    PathOps::LineTo { x: 300.0, y: 10.0 },
+    PathOps::Close,
+];
 
-    // Imperfect yellow rect
-    canvas.draw_shape(
-        vec![
-            PathOps::MoveTo { x: 400.0, y: 10.0 },
-            PathOps::LineTo { x: 400.0, y: 50.0 },
-            PathOps::LineTo { x: 450.0, y: 10.0 },
-            PathOps::Close,
-        ],
-        FillStyle::Plain(Color {
-            r: 0.0,
-            g: 1.0,
-            b: 1.0,
-            a: 1.0,
-        }),
-        FillRule::NonZero,
-    );
+const FILL_RED: FillStyle = FillStyle::Plain(Color {
+    r: 0.8,
+    g: 0.1,
+    b: 0.3,
+    a: 1.0,
+});
 
-    canvas.draw_shape(
-        vec![
-            PathOps::MoveTo { x: 400.0, y: 50.0 },
-            PathOps::LineTo { x: 450.0, y: 50.0 },
-            PathOps::LineTo { x: 450.0, y: 10.0 },
-            PathOps::Close,
-        ],
-        FillStyle::Plain(Color {
-            r: 0.0,
-            g: 1.0,
-            b: 1.0,
-            a: 1.0,
-        }),
-        FillRule::NonZero,
-    );
+const BLUE_RECT: [PathOps; 8] = [
+    PathOps::MoveTo { x: 10.0, y: 10.0 },
+    PathOps::LineTo { x: 10.0, y: 50.0 },
+    PathOps::LineTo { x: 50.0, y: 10.0 },
+    PathOps::Close,
+    PathOps::MoveTo { x: 10.0, y: 50.0 },
+    PathOps::LineTo { x: 50.0, y: 50.0 },
+    PathOps::LineTo { x: 50.0, y: 10.0 },
+    PathOps::Close,
+];
 
-    // Diamond
-    canvas.draw_shape(
-        vec![
-            PathOps::MoveTo { x: 50.0, y: 350.0 },
-            PathOps::LineTo { x: 100.0, y: 300.0 },
-            PathOps::LineTo { x: 100.0, y: 400.0 },
-            PathOps::Close,
-            PathOps::MoveTo { x: 150.0, y: 350.0 },
-            PathOps::LineTo { x: 100.0, y: 300.0 },
-            PathOps::LineTo { x: 100.0, y: 400.0 },
-            PathOps::Close,
-        ],
-        FillStyle::Plain(Color {
-            r: 0.1,
-            g: 0.6,
-            b: 0.1,
-            a: 1.0,
-        }),
-        FillRule::NonZero,
-    );
+const FILL_BLUE: FillStyle = FillStyle::Plain(Color {
+    r: 0.0,
+    g: 0.0,
+    b: 1.0,
+    a: 1.0,
+});
 
-    // Triangle with an almost horizontal side
-    canvas.draw_shape(
-        vec![
-            PathOps::MoveTo { x: 300.0, y: 400.0 },
-            PathOps::LineToRel { x: 50.0, y: -50.0 },
-            PathOps::LineToRel { x: -10.0, y: 51.0 },
-            PathOps::Close,
-        ],
-        FillStyle::Plain(Color {
-            r: 0.3,
-            g: 0.1,
-            b: 0.5,
-            a: 1.0,
-        }),
-        FillRule::NonZero,
-    );
+const IMPERFECT_RECT_PART1: [PathOps; 4] = [
+    PathOps::MoveTo { x: 400.0, y: 10.0 },
+    PathOps::LineTo { x: 400.0, y: 50.0 },
+    PathOps::LineTo { x: 450.0, y: 10.0 },
+    PathOps::Close,
+];
 
-    let u8_buffer = canvas.to_u8();
+const IMPERFECT_RECT_PART2: [PathOps; 4] = [
+    PathOps::MoveTo { x: 400.0, y: 50.0 },
+    PathOps::LineTo { x: 450.0, y: 50.0 },
+    PathOps::LineTo { x: 450.0, y: 10.0 },
+    PathOps::Close,
+];
 
-    image::save_buffer(
-        "triangle_test.png",
-        u8_buffer.as_slice(),
-        canvas.desc.width as u32,
-        canvas.desc.height as u32,
-        image::ColorType::Rgba8,
-    )
-    .unwrap();
+const FILL_CYAN: FillStyle = FillStyle::Plain(Color {
+    r: 0.0,
+    g: 1.0,
+    b: 1.0,
+    a: 1.0,
+});
+
+const DIAMOND: [PathOps; 8] = [
+    PathOps::MoveTo { x: 50.0, y: 350.0 },
+    PathOps::LineTo { x: 100.0, y: 300.0 },
+    PathOps::LineTo { x: 100.0, y: 400.0 },
+    PathOps::Close,
+    PathOps::MoveTo { x: 150.0, y: 350.0 },
+    PathOps::LineTo { x: 100.0, y: 300.0 },
+    PathOps::LineTo { x: 100.0, y: 400.0 },
+    PathOps::Close,
+];
+
+const FILL_DIAMOND: FillStyle = FillStyle::Plain(Color {
+    r: 0.1,
+    g: 0.6,
+    b: 0.1,
+    a: 1.0,
+});
+
+const SMALL_PURPLE_TRIANGLE: [PathOps; 4] = [
+    PathOps::MoveTo { x: 300.0, y: 400.0 },
+    PathOps::LineToRel { x: 50.0, y: -50.0 },
+    PathOps::LineToRel { x: -10.0, y: 51.0 },
+    PathOps::Close,
+];
+
+const FILL_PURPLE: FillStyle = FillStyle::Plain(Color {
+    r: 0.3,
+    g: 0.1,
+    b: 0.5,
+    a: 1.0,
+});
+
+const FILL_RULE: FillRule = FillRule::NonZero;
+
+implement_test! {
+    triangle_test, canvas_description |
+    BIG_TRIANGLE,               FILL_WHITE,    FILL_RULE,
+    SMALL_WHITE_TRIANGLE,       FILL_WHITE,    FILL_RULE,
+    RED_TRIANGLES,              FILL_RED,      FILL_RULE,
+    BLUE_RECT,                  FILL_BLUE,     FILL_RULE,
+    IMPERFECT_RECT_PART1,       FILL_CYAN,     FILL_RULE,
+    IMPERFECT_RECT_PART2,       FILL_CYAN,     FILL_RULE,
+    DIAMOND,                    FILL_DIAMOND,  FILL_RULE,
+    SMALL_PURPLE_TRIANGLE,      FILL_PURPLE,   FILL_RULE
 }
