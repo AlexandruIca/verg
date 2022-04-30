@@ -15,12 +15,7 @@ fn canvas_description() -> CanvasDescription {
     CanvasDescription {
         width: WIDTH,
         height: HEIGHT,
-        background_color: Color {
-            r: 1.0,
-            g: 0.5,
-            b: 0.5,
-            a: 1.0,
-        },
+        background_color: Color::coral(),
         ..Default::default()
     }
 }
@@ -42,12 +37,7 @@ const PATH: [PathOps; 5] = [
     PathOps::Close,
 ];
 
-const FILL_STYLE: FillStyle = FillStyle::Plain(Color {
-    r: 0.3,
-    g: 0.2,
-    b: 0.3,
-    a: 1.0,
-});
+static FILL_STYLE: FillStyle = FillStyle::Plain(Color::dark_slate_blue());
 
 const FILL_RULE: FillRule = FillRule::NonZero;
 
