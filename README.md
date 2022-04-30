@@ -4,10 +4,9 @@
 This is a WIP vector graphics rendering library. Its goal is to be simple to use and easy to embed in existing projects. It doesn't necessarily want to implement a lot of features:
 - Rendering cubic and quadratic Bézier curves
 - Gradients: linear, radial, conic
-- Dashing and stroking
-- Clipping and masking
 - Support for color spaces
 - Correct alpha compositing, including supporting Porter Duff's operators
+- Clipping and masking (not sure about this)
 
 Any other features will be implemented only if they're not too complicated. The focus right now is on _correct_ rendering rather than having lots of features.
 
