@@ -67,6 +67,7 @@ impl std::fmt::Display for GridPoint {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum PathOps {
     MoveTo { x: f64, y: f64 },
     MoveToRel { x: f64, y: f64 },
