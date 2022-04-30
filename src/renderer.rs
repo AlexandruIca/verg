@@ -223,6 +223,40 @@ pub fn render_path(
     return result;
 }
 
+fn alpha_fill_even_odd(
+    cell: &AccumulationCell,
+    prev_cell: &mut AccumulationCell,
+    acc: &mut f32,
+    filling: &mut f32,
+) -> f32 {
+    if cell.id > 0 && cell.id != prev_cell.id {
+        prev_cell.id = cell.id;
+        *filling = -(*filling);
+    }
+
+    if cell.id == prev_cell.id {
+        *acc += *filling * cell.area.abs();
+
+        if *acc < 0.0 || *acc > 1.0 {
+            *acc = (!(*filling > 0.0) as i32) as f32;
+        }
+    } else {
+        *acc = ((*filling > 0.0) as i32) as f32;
+    }
+
+    clamp(acc.abs(), 0.0, 1.0)
+}
+
+fn alpha_fill_non_zero(
+    cell: &AccumulationCell,
+    _prev_cell: &mut AccumulationCell,
+    acc: &mut f32,
+    _filling: &mut f32,
+) -> f32 {
+    *acc += cell.area;
+    acc.abs()
+}
+
 pub fn fill_path(
     accumulation_buffer: &mut [AccumulationCell],
     color_buffer: &mut [f64],
@@ -235,36 +269,14 @@ pub fn fill_path(
         let mut acc = 0.0_f32;
         let mut filling = -1.0_f32;
         let mut prev_cell = AccumulationCell { area: 0.0, id: 0 };
+        let get_alpha = match fill_rule {
+            FillRule::NonZero => alpha_fill_non_zero,
+            FillRule::EvenOdd => alpha_fill_even_odd,
+        };
 
         for x in bounds.min_x..bounds.max_x {
             let cell = &mut accumulation_buffer[y * desc.width + x];
-            let area = cell.area;
-
-            let alpha = match fill_rule {
-                FillRule::EvenOdd => {
-                    if cell.id > 0 && cell.id != prev_cell.id {
-                        prev_cell.id = cell.id;
-                        filling = -filling;
-                    }
-
-                    if cell.id == prev_cell.id {
-                        acc += filling * area.abs();
-
-                        if acc < 0.0 || acc > 1.0 {
-                            acc = (!(filling > 0.0) as i32) as f32;
-                        }
-                    } else {
-                        acc = ((filling > 0.0) as i32) as f32;
-                    }
-
-                    clamp(acc.abs(), 0.0, 1.0)
-                }
-                FillRule::NonZero => {
-                    acc += area;
-                    acc.abs()
-                }
-            };
-
+            let alpha = get_alpha(cell, &mut prev_cell, &mut acc, &mut filling);
             cell.area = 0.0_f32;
 
             let pixel_offset: usize = y * desc.width * NUM_CHANNELS + x * NUM_CHANNELS;
