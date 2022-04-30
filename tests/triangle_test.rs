@@ -1,3 +1,5 @@
+// This test draws a bunch of triangles of different sizes, colors and shapes.
+
 use verg::canvas::{Canvas, CanvasDescription};
 use verg::color::{Color, FillRule, FillStyle};
 use verg::geometry::PathOps;
@@ -7,20 +9,20 @@ fn triangle_test() {
     const WIDTH: usize = 500;
     const HEIGHT: usize = 500;
     let fill_color = Color {
-        r: 1.0_f64,
-        g: 1.0_f64,
-        b: 1.0_f64,
-        a: 1.0_f64,
+        r: 1.0,
+        g: 1.0,
+        b: 1.0,
+        a: 1.0,
     };
 
     let mut canvas = Canvas::new(CanvasDescription {
         width: WIDTH,
         height: HEIGHT,
         background_color: Color {
-            r: 0.0_f64,
-            g: 0.0_f64,
-            b: 0.0_f64,
-            a: 1.0_f64,
+            r: 0.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0,
         },
         ..Default::default()
     });
@@ -28,21 +30,9 @@ fn triangle_test() {
     // Big triangle
     canvas.draw_shape(
         vec![
-            PathOps::MoveTo {
-                // 1
-                x: 60.0_f64,
-                y: 240.0_f64,
-            },
-            PathOps::LineTo {
-                // 2
-                x: 360.0_f64,
-                y: 80.0_f64,
-            },
-            PathOps::LineTo {
-                // 3
-                x: 400.0_f64,
-                y: 280.0_f64,
-            },
+            PathOps::MoveTo { x: 60.0, y: 240.0 },
+            PathOps::LineTo { x: 360.0, y: 80.0 },
+            PathOps::LineTo { x: 400.0, y: 280.0 },
             PathOps::Close,
         ],
         FillStyle::Plain(fill_color),
@@ -52,18 +42,9 @@ fn triangle_test() {
     // Small white triangle
     canvas.draw_shape(
         vec![
-            PathOps::MoveTo {
-                x: 100.0_f64,
-                y: 150.0_f64,
-            },
-            PathOps::LineTo {
-                x: 100.0_f64,
-                y: 110.0_f64,
-            },
-            PathOps::LineTo {
-                x: 150.0_f64,
-                y: 110.0_f64,
-            },
+            PathOps::MoveTo { x: 100.0, y: 150.0 },
+            PathOps::LineTo { x: 100.0, y: 110.0 },
+            PathOps::LineTo { x: 150.0, y: 110.0 },
             PathOps::Close,
         ],
         FillStyle::Plain(fill_color),
@@ -73,38 +54,20 @@ fn triangle_test() {
     // Red triangles
     canvas.draw_shape(
         vec![
-            PathOps::MoveTo {
-                x: 100.0_f64,
-                y: 50.0_f64,
-            },
-            PathOps::LineTo {
-                x: 100.0_f64,
-                y: 10.0_f64,
-            },
-            PathOps::LineTo {
-                x: 150.0_f64,
-                y: 10.0_f64,
-            },
+            PathOps::MoveTo { x: 100.0, y: 50.0 },
+            PathOps::LineTo { x: 100.0, y: 10.0 },
+            PathOps::LineTo { x: 150.0, y: 10.0 },
             PathOps::Close,
-            PathOps::MoveTo {
-                x: 250.0_f64,
-                y: 50.0_f64,
-            },
-            PathOps::LineTo {
-                x: 300.0_f64,
-                y: 50.0_f64,
-            },
-            PathOps::LineTo {
-                x: 300.0_f64,
-                y: 10.0_f64,
-            },
+            PathOps::MoveTo { x: 250.0, y: 50.0 },
+            PathOps::LineTo { x: 300.0, y: 50.0 },
+            PathOps::LineTo { x: 300.0, y: 10.0 },
             PathOps::Close,
         ],
         FillStyle::Plain(Color {
-            r: 0.8_f64,
-            g: 0.1_f64,
-            b: 0.3_f64,
-            a: 1.0_f64,
+            r: 0.8,
+            g: 0.1,
+            b: 0.3,
+            a: 1.0,
         }),
         FillRule::NonZero,
     );
@@ -112,38 +75,20 @@ fn triangle_test() {
     // Blue rect
     canvas.draw_shape(
         vec![
-            PathOps::MoveTo {
-                x: 10.0_f64,
-                y: 10.0_f64,
-            },
-            PathOps::LineTo {
-                x: 10.0_f64,
-                y: 50.0_f64,
-            },
-            PathOps::LineTo {
-                x: 50.0_f64,
-                y: 10.0_f64,
-            },
+            PathOps::MoveTo { x: 10.0, y: 10.0 },
+            PathOps::LineTo { x: 10.0, y: 50.0 },
+            PathOps::LineTo { x: 50.0, y: 10.0 },
             PathOps::Close,
-            PathOps::MoveTo {
-                x: 10.0_f64,
-                y: 50.0_f64,
-            },
-            PathOps::LineTo {
-                x: 50.0_f64,
-                y: 50.0_f64,
-            },
-            PathOps::LineTo {
-                x: 50.0_f64,
-                y: 10.0_f64,
-            },
+            PathOps::MoveTo { x: 10.0, y: 50.0 },
+            PathOps::LineTo { x: 50.0, y: 50.0 },
+            PathOps::LineTo { x: 50.0, y: 10.0 },
             PathOps::Close,
         ],
         FillStyle::Plain(Color {
-            r: 0.0_f64,
-            g: 0.0_f64,
-            b: 1.0_f64,
-            a: 1.0_f64,
+            r: 0.0,
+            g: 0.0,
+            b: 1.0,
+            a: 1.0,
         }),
         FillRule::NonZero,
     );
@@ -151,50 +96,32 @@ fn triangle_test() {
     // Imperfect yellow rect
     canvas.draw_shape(
         vec![
-            PathOps::MoveTo {
-                x: 400.0_f64,
-                y: 10.0_f64,
-            },
-            PathOps::LineTo {
-                x: 400.0_f64,
-                y: 50.0_f64,
-            },
-            PathOps::LineTo {
-                x: 450.0_f64,
-                y: 10.0_f64,
-            },
+            PathOps::MoveTo { x: 400.0, y: 10.0 },
+            PathOps::LineTo { x: 400.0, y: 50.0 },
+            PathOps::LineTo { x: 450.0, y: 10.0 },
             PathOps::Close,
         ],
         FillStyle::Plain(Color {
-            r: 0.0_f64,
-            g: 1.0_f64,
-            b: 1.0_f64,
-            a: 1.0_f64,
+            r: 0.0,
+            g: 1.0,
+            b: 1.0,
+            a: 1.0,
         }),
         FillRule::NonZero,
     );
 
     canvas.draw_shape(
         vec![
-            PathOps::MoveTo {
-                x: 400.0_f64,
-                y: 50.0_f64,
-            },
-            PathOps::LineTo {
-                x: 450.0_f64,
-                y: 50.0_f64,
-            },
-            PathOps::LineTo {
-                x: 450.0_f64,
-                y: 10.0_f64,
-            },
+            PathOps::MoveTo { x: 400.0, y: 50.0 },
+            PathOps::LineTo { x: 450.0, y: 50.0 },
+            PathOps::LineTo { x: 450.0, y: 10.0 },
             PathOps::Close,
         ],
         FillStyle::Plain(Color {
-            r: 0.0_f64,
-            g: 1.0_f64,
-            b: 1.0_f64,
-            a: 1.0_f64,
+            r: 0.0,
+            g: 1.0,
+            b: 1.0,
+            a: 1.0,
         }),
         FillRule::NonZero,
     );
@@ -202,38 +129,20 @@ fn triangle_test() {
     // Diamond
     canvas.draw_shape(
         vec![
-            PathOps::MoveTo {
-                x: 50.0_f64,
-                y: 350.0_f64,
-            },
-            PathOps::LineTo {
-                x: 100.0_f64,
-                y: 300.0_f64,
-            },
-            PathOps::LineTo {
-                x: 100.0_f64,
-                y: 400.0_f64,
-            },
+            PathOps::MoveTo { x: 50.0, y: 350.0 },
+            PathOps::LineTo { x: 100.0, y: 300.0 },
+            PathOps::LineTo { x: 100.0, y: 400.0 },
             PathOps::Close,
-            PathOps::MoveTo {
-                x: 150.0_f64,
-                y: 350.0_f64,
-            },
-            PathOps::LineTo {
-                x: 100.0_f64,
-                y: 300.0_f64,
-            },
-            PathOps::LineTo {
-                x: 100.0_f64,
-                y: 400.0_f64,
-            },
+            PathOps::MoveTo { x: 150.0, y: 350.0 },
+            PathOps::LineTo { x: 100.0, y: 300.0 },
+            PathOps::LineTo { x: 100.0, y: 400.0 },
             PathOps::Close,
         ],
         FillStyle::Plain(Color {
-            r: 0.1_f64,
-            g: 0.6_f64,
-            b: 0.1_f64,
-            a: 1.0_f64,
+            r: 0.1,
+            g: 0.6,
+            b: 0.1,
+            a: 1.0,
         }),
         FillRule::NonZero,
     );
@@ -241,18 +150,9 @@ fn triangle_test() {
     // Triangle with an almost horizontal side
     canvas.draw_shape(
         vec![
-            PathOps::MoveTo {
-                x: 300.0_f64,
-                y: 400.0_f64,
-            },
-            PathOps::LineToRel {
-                x: 50.0_f64,
-                y: -50.0_f64,
-            },
-            PathOps::LineToRel {
-                x: -10.0_f64,
-                y: 51.0_f64,
-            },
+            PathOps::MoveTo { x: 300.0, y: 400.0 },
+            PathOps::LineToRel { x: 50.0, y: -50.0 },
+            PathOps::LineToRel { x: -10.0, y: 51.0 },
             PathOps::Close,
         ],
         FillStyle::Plain(Color {
