@@ -1,11 +1,11 @@
-use crate::color::{clamp_f64, Color, FillRule, FillStyle};
+use crate::color::{clamp, Color, FillRule, FillStyle};
 use crate::geometry::{Path, PathOps, Point};
 use std::vec::Vec;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct AccumulationCell {
-    pub area: f64,
-    pub id: i64,
+    pub area: f32,
+    pub id: i32,
 }
 
 #[derive(Debug)]
@@ -54,10 +54,7 @@ impl Canvas {
         Canvas {
             buffer,
             accumulation_buffer: vec![
-                AccumulationCell {
-                    area: 0.0_f64,
-                    id: 0,
-                };
+                AccumulationCell { area: 0.0, id: 0 };
                 desc.width * desc.height
             ],
             desc,
@@ -137,8 +134,8 @@ impl Canvas {
     /// Line drawing algorithm taken from here:
     /// - https://medium.com/@raphlinus/inside-the-fastest-font-renderer-in-the-world-75ae5270c445
     ///
-    fn draw_line(&mut self, start: &Point, end: &Point, id: i64) {
-        let update = |area: f64, cell: &mut AccumulationCell| {
+    fn draw_line(&mut self, start: &Point, end: &Point, id: i32) {
+        let update = |area: f32, cell: &mut AccumulationCell| {
             cell.area += area;
             cell.id = id;
         };
@@ -174,11 +171,11 @@ impl Canvas {
                     continue; // oob index
                 }
                 update(
-                    d - d * xmf,
+                    (d - d * xmf) as f32,
                     &mut self.accumulation_buffer[linestart_x0i as usize],
                 );
                 update(
-                    d * xmf,
+                    (d * xmf) as f32,
                     &mut self.accumulation_buffer[linestart_x0i as usize + 1],
                 );
             } else {
@@ -192,36 +189,36 @@ impl Canvas {
                     continue; // oob index
                 }
                 update(
-                    d * a0,
+                    (d * a0) as f32,
                     &mut self.accumulation_buffer[linestart_x0i as usize],
                 );
 
                 if x1i == x0i + 2 {
                     update(
-                        d * (1.0 - a0 - am),
+                        (d * (1.0 - a0 - am)) as f32,
                         &mut self.accumulation_buffer[linestart_x0i as usize + 1],
                     );
                 } else {
                     let a1 = s * (1.5 - x0f);
                     update(
-                        d * (a1 - a0),
+                        (d * (a1 - a0)) as f32,
                         &mut self.accumulation_buffer[linestart_x0i as usize + 1],
                     );
 
                     for xi in x0i + 2..x1i - 1 {
                         update(
-                            d * s,
+                            (d * s) as f32,
                             &mut self.accumulation_buffer[linestart + xi as usize],
                         );
                     }
                     let a2 = a1 + (x1i - x0i - 3) as f64 * s;
                     update(
-                        d * (1.0 - a2 - am),
+                        (d * (1.0 - a2 - am)) as f32,
                         &mut self.accumulation_buffer[linestart + (x1i - 1) as usize],
                     );
                 }
                 update(
-                    d * am,
+                    (d * am) as f32,
                     &mut self.accumulation_buffer[linestart + x1i as usize],
                 );
             }
@@ -311,8 +308,8 @@ impl Canvas {
         }
 
         for y in min_y..=max_y {
-            let mut acc = 0.0_f64;
-            let mut filling = -1.0_f64;
+            let mut acc = 0.0_f32;
+            let mut filling = -1.0_f32;
             let mut prev_cell = AccumulationCell { area: 0.0, id: 0 };
 
             for x in min_x..max_x {
@@ -330,13 +327,13 @@ impl Canvas {
                             acc += filling * area.abs();
 
                             if acc < 0.0 || acc > 1.0 {
-                                acc = (!(filling > 0.0) as i64) as f64;
+                                acc = (!(filling > 0.0) as i32) as f32;
                             }
                         } else {
-                            acc = ((filling > 0.0) as i64) as f64;
+                            acc = ((filling > 0.0) as i32) as f32;
                         }
 
-                        clamp_f64(acc.abs(), 0.0, 1.0)
+                        clamp(acc.abs(), 0.0, 1.0)
                     }
                     FillRule::NonZero => {
                         acc += area;
@@ -344,20 +341,25 @@ impl Canvas {
                     }
                 };
 
-                cell.area = 0.0_f64;
+                cell.area = 0.0_f32;
 
                 let dest = self.buffer_get_at_usize(x, y);
                 let src = match fill_style {
-                    FillStyle::Plain(Color { r, g, b, a: _ }) => Color { r, g, b, a: alpha },
+                    FillStyle::Plain(Color { r, g, b, a: _ }) => Color {
+                        r,
+                        g,
+                        b,
+                        a: alpha as f64,
+                    },
                 };
 
                 self.buffer_set_at_usize(
                     x,
                     y,
                     &Color {
-                        r: src.r * src.a + dest.r * (1.0_f64 - src.a),
-                        g: src.g * src.a + dest.g * (1.0_f64 - src.a),
-                        b: src.b * src.a + dest.b * (1.0_f64 - src.a),
+                        r: src.r * src.a + dest.r * (1.0 - src.a),
+                        g: src.g * src.a + dest.g * (1.0 - src.a),
+                        b: src.b * src.a + dest.b * (1.0 - src.a),
                         a: dest.a,
                     }
                     .clamp(),
