@@ -6,7 +6,7 @@ pub struct Color {
     pub a: f64,
 }
 
-fn clamp_f64(v: f64, min: f64, max: f64) -> f64 {
+pub fn clamp_f64(v: f64, min: f64, max: f64) -> f64 {
     return if v < min {
         min
     } else if v > max {
