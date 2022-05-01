@@ -6,6 +6,132 @@ use crate::{
     geometry::{BoundingBox, Path, PathOps, Point},
 };
 
+///
+/// Parameters `src` and `dest`.
+///
+pub type BlendFunc = fn(&Color, &Color) -> Color;
+
+pub mod blend_func {
+    use crate::{color::clamp, renderer::Color};
+
+    pub fn source_over(src: &Color, dest: &Color) -> Color {
+        Color {
+            r: src.r * src.a + dest.r * dest.a * (1.0 - src.a),
+            g: src.g * src.a + dest.g * dest.a * (1.0 - src.a),
+            b: src.b * src.a + dest.b * dest.a * (1.0 - src.a),
+            a: src.a + dest.a * (1.0 - src.a),
+        }
+    }
+
+    pub fn destination_over(src: &Color, dest: &Color) -> Color {
+        Color {
+            r: src.r * src.a * (1.0 - dest.a) + dest.r * dest.a,
+            g: src.g * src.a * (1.0 - dest.a) + dest.g * dest.a,
+            b: src.b * src.a * (1.0 - dest.a) + dest.b * dest.a,
+            a: src.a * (1.0 - dest.a) + dest.a,
+        }
+    }
+
+    pub fn source_out(src: &Color, dest: &Color) -> Color {
+        Color {
+            r: src.r * src.a * (1.0 - dest.a),
+            g: src.g * src.a * (1.0 - dest.a),
+            b: src.b * src.a * (1.0 - dest.a),
+            a: src.a * (1.0 - dest.a),
+        }
+    }
+
+    pub fn destination_out(src: &Color, dest: &Color) -> Color {
+        Color {
+            r: dest.r * dest.a * (1.0 - src.a),
+            g: dest.g * dest.a * (1.0 - src.a),
+            b: dest.b * dest.a * (1.0 - src.a),
+            a: dest.a * (1.0 - src.a),
+        }
+    }
+
+    pub fn source_in(src: &Color, dest: &Color) -> Color {
+        Color {
+            r: src.r * src.a * dest.a,
+            g: src.g * src.a * dest.a,
+            b: src.b * src.a * dest.a,
+            a: src.a * dest.a,
+        }
+    }
+
+    pub fn destination_in(src: &Color, dest: &Color) -> Color {
+        Color {
+            r: dest.r * dest.a * src.a,
+            g: dest.g * dest.a * src.a,
+            b: dest.b * dest.a * src.a,
+            a: dest.a * src.a,
+        }
+    }
+
+    pub fn source_atop(src: &Color, dest: &Color) -> Color {
+        Color {
+            r: src.r * src.a * dest.a + dest.r * dest.a * (1.0 - src.a),
+            g: src.g * src.a * dest.a + dest.g * dest.a * (1.0 - src.a),
+            b: src.b * src.a * dest.a + dest.b * dest.a * (1.0 - src.a),
+            a: src.a * dest.a + dest.a * (1.0 - src.a),
+        }
+    }
+
+    pub fn destination_atop(src: &Color, dest: &Color) -> Color {
+        Color {
+            r: src.r * src.a * (1.0 - dest.a) + dest.r * dest.a * src.a,
+            g: src.g * src.a * (1.0 - dest.a) + dest.g * dest.a * src.a,
+            b: src.b * src.a * (1.0 - dest.a) + dest.b * dest.a * src.a,
+            a: src.a * (1.0 - dest.a) + dest.a * src.a,
+        }
+    }
+
+    pub fn xor(src: &Color, dest: &Color) -> Color {
+        Color {
+            r: src.r * src.a * (1.0 - dest.a) + dest.r * dest.a * (1.0 - src.a),
+            g: src.g * src.a * (1.0 - dest.a) + dest.g * dest.a * (1.0 - src.a),
+            b: src.b * src.a * (1.0 - dest.a) + dest.b * dest.a * (1.0 - src.a),
+            a: src.a * (1.0 - dest.a) + dest.a * (1.0 - src.a),
+        }
+    }
+
+    pub fn clear(_src: &Color, _dest: &Color) -> Color {
+        Color {
+            r: 0.0,
+            g: 0.0,
+            b: 0.0,
+            a: 0.0,
+        }
+    }
+
+    pub fn source(src: &Color, _dest: &Color) -> Color {
+        Color {
+            r: src.r,
+            g: src.g,
+            b: src.b,
+            a: src.a,
+        }
+    }
+
+    pub fn destination(_src: &Color, dest: &Color) -> Color {
+        Color {
+            r: dest.r,
+            g: dest.g,
+            b: dest.b,
+            a: dest.a,
+        }
+    }
+
+    pub fn additive(src: &Color, dest: &Color) -> Color {
+        Color {
+            r: clamp(src.r * src.a + dest.r * dest.a, 0.0, 1.0),
+            g: clamp(src.g * src.a + dest.g * dest.a, 0.0, 1.0),
+            b: clamp(src.b * src.a + dest.b * dest.a, 0.0, 1.0),
+            a: clamp(src.a + dest.a, 0.0, 1.0),
+        }
+    }
+}
+
 pub const NUM_CHANNELS: usize = 4;
 
 fn update_cell(area: f32, cell: &mut AccumulationCell, id: i32) {
@@ -268,8 +394,9 @@ pub fn fill_path(
     fill_style: FillStyle,
     fill_rule: FillRule,
     bounds: &BoundingBox,
+    blend: BlendFunc,
 ) {
-    for y in bounds.min_y..=bounds.max_y {
+    for y in bounds.min_y..bounds.max_y {
         let mut acc = 0.0_f32;
         let mut filling = -1.0_f32;
         let mut prev_cell = AccumulationCell { area: 0.0, id: 0 };
@@ -291,18 +418,20 @@ pub fn fill_path(
                 a: color_buffer[pixel_offset + 3],
             };
             let src = match fill_style {
-                FillStyle::Plain(Color { r, g, b, a: _ }) => Color {
+                FillStyle::Plain(Color { r, g, b, a }) => Color {
                     r,
                     g,
                     b,
-                    a: alpha as f64,
+                    a: f64::min(alpha as f64, a),
                 },
             };
 
-            color_buffer[pixel_offset] = src.r * src.a + dest.r * (1.0 - src.a);
-            color_buffer[pixel_offset + 1] = src.g * src.a + dest.g * (1.0 - src.a);
-            color_buffer[pixel_offset + 2] = src.b * src.a + dest.b * (1.0 - src.a);
-            color_buffer[pixel_offset + 3] = dest.a;
+            let resulting_color = blend(&src, &dest);
+
+            color_buffer[pixel_offset] = resulting_color.r;
+            color_buffer[pixel_offset + 1] = resulting_color.g;
+            color_buffer[pixel_offset + 2] = resulting_color.b;
+            color_buffer[pixel_offset + 3] = resulting_color.a;
         }
     }
 }

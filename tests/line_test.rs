@@ -1,5 +1,6 @@
 // This test draws some open paths using only lines.
 
+use crate::common::default_blending;
 use verg::{
     canvas::{Canvas, CanvasDescription},
     color::{Color, FillRule, FillStyle},
@@ -53,10 +54,10 @@ const FILL_RULE: FillRule = FillRule::NonZero;
 
 implement_test! {
     line_test, canvas_description |
-    LINES[0], FILL_STYLE, FILL_RULE,
-    LINES[1], FILL_STYLE, FILL_RULE,
-    LINES[2], FILL_STYLE, FILL_RULE,
-    LINES[3], FILL_STYLE, FILL_RULE,
-    LINES[4], FILL_STYLE, FILL_RULE,
-    LINES[5], FILL_STYLE, FILL_RULE
+    LINES[0], FILL_STYLE, FILL_RULE, default_blending,
+    LINES[1], FILL_STYLE, FILL_RULE, default_blending,
+    LINES[2], FILL_STYLE, FILL_RULE, default_blending,
+    LINES[3], FILL_STYLE, FILL_RULE, default_blending,
+    LINES[4], FILL_STYLE, FILL_RULE, default_blending,
+    LINES[5], FILL_STYLE, FILL_RULE, default_blending
 }

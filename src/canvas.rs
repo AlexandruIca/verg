@@ -1,6 +1,6 @@
 use crate::color::{Color, FillRule, FillStyle};
 use crate::geometry::Path;
-use crate::renderer::{fill_path, render_path, NUM_CHANNELS};
+use crate::renderer::{blend_func, fill_path, render_path, BlendFunc, NUM_CHANNELS};
 use std::vec::Vec;
 
 #[derive(Debug, Clone, Copy)]
@@ -28,11 +28,11 @@ impl Default for CanvasDescription {
     }
 }
 
-#[derive(Debug)]
 pub struct Canvas {
     buffer: Vec<f64>,
     accumulation_buffer: Vec<AccumulationCell>,
     pub desc: CanvasDescription,
+    blend: BlendFunc,
 }
 
 impl Canvas {
@@ -57,7 +57,12 @@ impl Canvas {
                 desc.width * desc.height
             ],
             desc,
+            blend: blend_func::source_over,
         }
+    }
+
+    pub fn set_blending_function(&mut self, f: BlendFunc) {
+        self.blend = f;
     }
 
     pub fn to_u8(&self) -> Vec<u8> {
@@ -82,6 +87,7 @@ impl Canvas {
             fill_style,
             fill_rule,
             &bounds,
+            self.blend,
         )
     }
 }

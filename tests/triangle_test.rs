@@ -1,5 +1,6 @@
 // This test draws a bunch of triangles of different sizes, colors and shapes.
 
+use crate::common::default_blending;
 use verg::canvas::{Canvas, CanvasDescription};
 use verg::color::{Color, FillRule, FillStyle};
 use verg::geometry::PathOps;
@@ -102,12 +103,12 @@ const FILL_RULE: FillRule = FillRule::NonZero;
 
 implement_test! {
     triangle_test, canvas_description |
-    BIG_TRIANGLE,               FILL_WHITE,    FILL_RULE,
-    SMALL_WHITE_TRIANGLE,       FILL_WHITE,    FILL_RULE,
-    RED_TRIANGLES,              FILL_RED,      FILL_RULE,
-    BLUE_RECT,                  FILL_BLUE,     FILL_RULE,
-    IMPERFECT_RECT_PART1,       FILL_CYAN,     FILL_RULE,
-    IMPERFECT_RECT_PART2,       FILL_CYAN,     FILL_RULE,
-    DIAMOND,                    FILL_DIAMOND,  FILL_RULE,
-    SMALL_PURPLE_TRIANGLE,      FILL_PURPLE,   FILL_RULE
+    BIG_TRIANGLE,               FILL_WHITE,    FILL_RULE, default_blending,
+    SMALL_WHITE_TRIANGLE,       FILL_WHITE,    FILL_RULE, default_blending,
+    RED_TRIANGLES,              FILL_RED,      FILL_RULE, default_blending,
+    BLUE_RECT,                  FILL_BLUE,     FILL_RULE, default_blending,
+    IMPERFECT_RECT_PART1,       FILL_CYAN,     FILL_RULE, default_blending,
+    IMPERFECT_RECT_PART2,       FILL_CYAN,     FILL_RULE, default_blending,
+    DIAMOND,                    FILL_DIAMOND,  FILL_RULE, default_blending,
+    SMALL_PURPLE_TRIANGLE,      FILL_PURPLE,   FILL_RULE, default_blending
 }

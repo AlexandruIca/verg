@@ -1,5 +1,6 @@
 // This tests draws a triangle inside a square using the even-odd fill rule.
 
+use crate::common::default_blending;
 use verg::{
     canvas::{Canvas, CanvasDescription},
     color::{Color, FillRule, FillStyle},
@@ -45,4 +46,7 @@ const FILL_STYLE: FillStyle = FillStyle::Plain(Color::white());
 
 const FILL_RULE: FillRule = FillRule::EvenOdd;
 
-implement_test! { even_odd_fill_test, canvas_description | PATH, FILL_STYLE, FILL_RULE }
+implement_test! {
+    even_odd_fill_test, canvas_description |
+    PATH, FILL_STYLE, FILL_RULE, default_blending
+}

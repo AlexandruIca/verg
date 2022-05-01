@@ -1,9 +1,11 @@
 use sha2::{Digest, Sha256};
+use verg::color::Color;
+use verg::renderer::blend_func;
 
 // We allow dead code because clippy gives a false positive.
 // The constant is used in `implement_test!`.
 #[allow(dead_code)]
-pub const REFERENCE_HASHES: [(&str, &str); 5] = [
+pub const REFERENCE_HASHES: [(&str, &str); 6] = [
     (
         "basic_test",
         "95AEB28CB13578C558F745AD4DFCE5DF3BCAD3E11C0C9F15077ED3144C6D4D98",
@@ -24,6 +26,10 @@ pub const REFERENCE_HASHES: [(&str, &str); 5] = [
         "triangle_test",
         "765A7406D707AF35C371B3505B0688C51FB11B42BBB5B46233EAA445A2F28675",
     ),
+    (
+        "alpha_blending_test",
+        "70219E61B2E80A622F1288FCEA6F8E93F38213F6EAE3207637974B844505FC83",
+    ),
 ];
 
 pub fn get_hash_for_color_buffer(buffer: &[u8]) -> String {
@@ -32,13 +38,20 @@ pub fn get_hash_for_color_buffer(buffer: &[u8]) -> String {
     format!("{:X}", hasher.finalize())
 }
 
+// Another false positive, this function is used in a lot of tests.
+#[allow(dead_code)]
+pub fn default_blending(src: &Color, dest: &Color) -> Color {
+    blend_func::source_over(src, dest)
+}
+
 #[macro_export]
 macro_rules! implement_test {
-    ( $($name:ident, $canvas:ident)? | $($path:expr, $fill_style:expr, $fill_rule:expr),* ) => {
+    ( $($name:ident, $canvas:ident)? | $($path:expr, $fill_style:expr, $fill_rule:expr, $blend:ident),* ) => {
         #[test]
         fn $($name)?() {
             let mut canvas = Canvas::new($($canvas)?());
             $(
+                canvas.set_blending_function($blend);
                 canvas.draw_shape(&($path), $fill_style, $fill_rule);
             )*
 
