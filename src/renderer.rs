@@ -6,6 +6,24 @@ use crate::{
     geometry::{BoundingBox, Path, PathOps, Point},
 };
 
+///
+/// Parameters `src` and `dest`.
+///
+pub type BlendFunc = fn(&Color, &Color) -> Color;
+
+pub mod blend_func {
+    use crate::renderer::Color;
+
+    pub fn source_over(src: &Color, dest: &Color) -> Color {
+        Color {
+            r: src.r * src.a + dest.r * dest.a * (1.0 - src.a),
+            g: src.g * src.a + dest.g * dest.a * (1.0 - src.a),
+            b: src.b * src.a + dest.b * dest.a * (1.0 - src.a),
+            a: src.a + dest.a * (1.0 - src.a),
+        }
+    }
+}
+
 pub const NUM_CHANNELS: usize = 4;
 
 fn update_cell(area: f32, cell: &mut AccumulationCell, id: i32) {
@@ -268,6 +286,7 @@ pub fn fill_path(
     fill_style: FillStyle,
     fill_rule: FillRule,
     bounds: &BoundingBox,
+    blend: BlendFunc,
 ) {
     for y in bounds.min_y..=bounds.max_y {
         let mut acc = 0.0_f32;
@@ -291,18 +310,20 @@ pub fn fill_path(
                 a: color_buffer[pixel_offset + 3],
             };
             let src = match fill_style {
-                FillStyle::Plain(Color { r, g, b, a: _ }) => Color {
+                FillStyle::Plain(Color { r, g, b, a }) => Color {
                     r,
                     g,
                     b,
-                    a: alpha as f64,
+                    a: f64::min(alpha as f64, a),
                 },
             };
 
-            color_buffer[pixel_offset] = src.r * src.a + dest.r * (1.0 - src.a);
-            color_buffer[pixel_offset + 1] = src.g * src.a + dest.g * (1.0 - src.a);
-            color_buffer[pixel_offset + 2] = src.b * src.a + dest.b * (1.0 - src.a);
-            color_buffer[pixel_offset + 3] = dest.a;
+            let resulting_color = blend(&src, &dest);
+
+            color_buffer[pixel_offset] = resulting_color.r;
+            color_buffer[pixel_offset + 1] = resulting_color.g;
+            color_buffer[pixel_offset + 2] = resulting_color.b;
+            color_buffer[pixel_offset + 3] = resulting_color.a;
         }
     }
 }
