@@ -1,5 +1,6 @@
 // This test draws a background on the whole canvas.
 
+use crate::common::default_blending;
 use verg::{
     canvas::{Canvas, CanvasDescription},
     color::{Color, FillRule, FillStyle},
@@ -41,4 +42,7 @@ static FILL_STYLE: FillStyle = FillStyle::Plain(Color::dark_slate_blue());
 
 const FILL_RULE: FillRule = FillRule::NonZero;
 
-implement_test! { basic_test, canvas_description | PATH, FILL_STYLE, FILL_RULE }
+implement_test! {
+    basic_test, canvas_description |
+    PATH, FILL_STYLE, FILL_RULE, default_blending
+}

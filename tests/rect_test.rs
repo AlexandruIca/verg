@@ -1,5 +1,6 @@
 // This test draws a rectangle that's not filled inside.
 
+use crate::common::default_blending;
 use verg::canvas::{Canvas, CanvasDescription};
 use verg::color::{Color, FillRule, FillStyle};
 use verg::geometry::PathOps;
@@ -43,4 +44,7 @@ const FILL_STYLE: FillStyle = FillStyle::Plain(Color::white());
 
 const FILL_RULE: FillRule = FillRule::NonZero;
 
-implement_test! { rect_test, canvas_description | PATH, FILL_STYLE, FILL_RULE }
+implement_test! {
+    rect_test, canvas_description |
+    PATH, FILL_STYLE, FILL_RULE, default_blending
+}
