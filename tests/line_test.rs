@@ -2,7 +2,7 @@
 
 use crate::common::default_blending;
 use verg::{
-    canvas::{Canvas, CanvasDescription},
+    canvas::{Canvas, CanvasDescription, ViewBox},
     color::{Color, FillRule, FillStyle},
     geometry::PathOps,
 };
@@ -16,6 +16,12 @@ fn canvas_description() -> CanvasDescription {
     CanvasDescription {
         width: WIDTH,
         height: HEIGHT,
+        viewbox: ViewBox {
+            x: 0.0,
+            y: 0.0,
+            width: WIDTH as f64,
+            height: HEIGHT as f64,
+        },
         background_color: Color::white(),
         ..Default::default()
     }

@@ -1,7 +1,7 @@
 // This test draws a bunch of triangles of different sizes, colors and shapes.
 
 use crate::common::default_blending;
-use verg::canvas::{Canvas, CanvasDescription};
+use verg::canvas::{Canvas, CanvasDescription, ViewBox};
 use verg::color::{Color, FillRule, FillStyle};
 use verg::geometry::PathOps;
 
@@ -14,6 +14,12 @@ fn canvas_description() -> CanvasDescription {
     CanvasDescription {
         width: WIDTH,
         height: HEIGHT,
+        viewbox: ViewBox {
+            x: 0.0,
+            y: 0.0,
+            width: WIDTH as f64,
+            height: HEIGHT as f64,
+        },
         background_color: Color::black(),
         ..Default::default()
     }
