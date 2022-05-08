@@ -22,145 +22,55 @@ impl Angle {
     }
 }
 
-//
-// Affine transformations are represented using an augmented matrix:
-//
-// | a00  a01  x |
-// |             |
-// | a10  a11  y |
-//
-#[derive(Debug, Clone, Copy)]
-struct AffineTransform {
-    pub a00: f64,
-    pub a01: f64,
-    pub a10: f64,
-    pub a11: f64,
-    pub x: f64,
-    pub y: f64,
+pub fn translate(point: &Point, x: f64, y: f64) -> Point {
+    Point {
+        x: point.x + x,
+        y: point.y + y,
+    }
 }
 
-impl AffineTransform {
-    pub const fn identity() -> Self {
-        Self {
-            a00: 1.0,
-            a01: 0.0,
-            a10: 1.0,
-            a11: 0.0,
-            x: 0.0,
-            y: 0.0,
-        }
+pub fn rotate(point: &Point, angle: Angle) -> Point {
+    let (sin, cos) = angle.to_radians().sin_cos();
+
+    Point {
+        x: point.x * sin - point.y * cos,
+        y: point.x * cos + point.y * sin,
     }
+}
 
-    //
-    //                        | a00  a01  x |
-    // | point.x  point.y | * |             |
-    //                        | a10  a11  y |
-    //
-    pub fn transform_point(&self, point: &Point) -> Point {
-        Point {
-            x: (point.x * self.a00 + point.y * self.a10) + self.x,
-            y: (point.x * self.a01 + point.y * self.a11) + self.y,
-        }
+pub fn rotate_around(point: &Point, around: &Point, angle: Angle) -> Point {
+    let p = translate(point, -around.x, -around.y);
+    let p = rotate(&p, angle);
+
+    translate(&p, around.x, around.y)
+}
+
+pub fn scale(point: &Point, sx: f64, sy: f64) -> Point {
+    Point {
+        x: point.x * sx,
+        y: point.y * sy,
     }
+}
 
-    pub fn translate(x: f64, y: f64) -> Self {
-        Self {
-            a00: 1.0,
-            a01: 0.0,
-            a10: 0.0,
-            a11: 1.0,
-            x,
-            y,
-        }
+pub fn scale_around(point: &Point, around: &Point, sx: f64, sy: f64) -> Point {
+    let p = translate(point, -around.x, -around.y);
+    let p = scale(&p, sx, sy);
+
+    translate(&p, around.x, around.y)
+}
+
+pub fn skew(point: &Point, x: Angle, y: Angle) -> Point {
+    Point {
+        x: point.x + point.y * y.to_radians().tan(),
+        y: point.y + point.x * x.to_radians().tan(),
     }
+}
 
-    pub fn rotate(angle: Angle) -> Self {
-        let (sin, cos) = angle.to_radians().sin_cos();
+pub fn skew_around(point: &Point, around: &Point, x: Angle, y: Angle) -> Point {
+    let p = translate(point, -around.x, -around.y);
+    let p = skew(&p, x, y);
 
-        Self {
-            a00: cos,
-            a01: sin,
-            a10: -sin,
-            a11: cos,
-            x: 0.0,
-            y: 0.0,
-        }
-    }
-
-    pub fn rotate_around(point: &Point, angle: Angle) -> Self {
-        Self::translate(point.x, point.y)
-            .then_rotate(angle)
-            .then_translate(-point.x, -point.y)
-    }
-
-    pub fn scale(x: f64, y: f64) -> Self {
-        Self {
-            a00: x,
-            a01: 0.0,
-            a10: 0.0,
-            a11: y,
-            x: 0.0,
-            y: 0.0,
-        }
-    }
-
-    pub fn skew(x: Angle, y: Angle) -> Self {
-        Self {
-            a00: 1.0,
-            a01: f64::tan(y.to_radians()),
-            a10: f64::tan(x.to_radians()),
-            a11: 1.0,
-            x: 0.0,
-            y: 0.0,
-        }
-    }
-
-    pub fn combine(first: &AffineTransform, second: &AffineTransform) -> Self {
-        let a00 = first.a00 * second.a00 + first.a10 * second.a01;
-        let a10 = first.a00 * second.a10 + first.a10 * second.a11;
-        let a01 = first.a01 * second.a00 + first.a11 * second.a01;
-        let a11 = first.a01 * second.a10 + first.a11 * second.a11;
-        let x = first.x * second.a00 + first.y * second.a01 + second.x;
-        let y = first.x * second.a10 + first.y * second.a11 + second.y;
-
-        Self {
-            a00,
-            a10,
-            a01,
-            a11,
-            x,
-            y,
-        }
-    }
-
-    pub fn then(&self, other: &AffineTransform) -> Self {
-        Self::combine(self, other)
-    }
-
-    pub fn then_translate(&self, x: f64, y: f64) -> Self {
-        let mut translate = *self;
-
-        translate.x += x;
-        translate.y += y;
-
-        translate
-    }
-
-    pub fn then_rotate(&self, angle: Angle) -> Self {
-        Self::combine(self, &Self::rotate(angle))
-    }
-
-    pub fn then_rotate_around(&self, point: &Point, angle: Angle) -> Self {
-        Self::combine(self, &Self::rotate_around(point, angle))
-    }
-
-    pub fn then_scale(&self, x: f64, y: f64) -> Self {
-        Self::combine(self, &Self::scale(x, y))
-    }
-
-    pub fn then_skew(&self, x: Angle, y: Angle) -> Self {
-        Self::combine(self, &Self::skew(x, y))
-    }
+    translate(&p, around.x, around.y)
 }
 
 // https://www.w3.org/TR/SVG2/coords.html#ComputingAViewportsTransform
@@ -179,8 +89,8 @@ pub fn map_viewbox(canvas: &CanvasDescription, point: &Point) -> Point {
     translate_x += (e_width - vb_width * scale_x) / 2.0;
     translate_y += (e_height - vb_height * scale_y) / 2.0;
 
-    let translated = AffineTransform::translate(translate_x, translate_y).transform_point(point);
-    let result = AffineTransform::scale(scale_x, scale_y).transform_point(&translated);
+    let translated = translate(point, translate_x, translate_y);
+    let result = scale(&translated, scale_x, scale_y);
 
     result
 }
