@@ -1,22 +1,28 @@
 // This tests the Porter-Duff blending operators.
 
-use crate::common::default_blending;
+use crate::common::{default_blending, default_callback};
 use verg::{
-    canvas::{Canvas, CanvasDescription},
+    canvas::{Canvas, CanvasDescription, ViewBox},
     color::{Color, FillRule, FillStyle},
-    geometry::PathOps,
+    geometry::{PathOps, Point},
     renderer::blend_func,
 };
 
 mod common;
 
-const WIDTH: usize = 1400;
-const HEIGHT: usize = 1020;
+const WIDTH: usize = 1410;
+const HEIGHT: usize = 1030;
 
 fn canvas_description() -> CanvasDescription {
     CanvasDescription {
         width: WIDTH,
         height: HEIGHT,
+        viewbox: ViewBox {
+            x: 0.0,
+            y: 0.0,
+            width: WIDTH as f64,
+            height: HEIGHT as f64,
+        },
         background_color: Color {
             r: 0.0,
             g: 0.0,
@@ -319,7 +325,7 @@ fn additive(src: &Color, dest: &Color) -> Color {
 }
 
 implement_test! {
-    alpha_blending_test, canvas_description |
+    alpha_blending_test, canvas_description, default_callback |
     DESTINATION_TRIANGLES[0],  FILL_DESTINATION, FILL_RULE, default_blending,
     SOURCE_TRIANGLES[0],       FILL_SOURCE,      FILL_RULE, default_blending,
     DESTINATION_TRIANGLES[1],  FILL_DESTINATION, FILL_RULE, default_blending,

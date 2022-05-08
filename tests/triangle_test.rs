@@ -1,9 +1,9 @@
 // This test draws a bunch of triangles of different sizes, colors and shapes.
 
-use crate::common::default_blending;
-use verg::canvas::{Canvas, CanvasDescription};
+use crate::common::{default_blending, default_callback};
+use verg::canvas::{Canvas, CanvasDescription, ViewBox};
 use verg::color::{Color, FillRule, FillStyle};
-use verg::geometry::PathOps;
+use verg::geometry::{PathOps, Point};
 
 mod common;
 
@@ -14,6 +14,12 @@ fn canvas_description() -> CanvasDescription {
     CanvasDescription {
         width: WIDTH,
         height: HEIGHT,
+        viewbox: ViewBox {
+            x: 0.0,
+            y: 0.0,
+            width: WIDTH as f64,
+            height: HEIGHT as f64,
+        },
         background_color: Color::black(),
         ..Default::default()
     }
@@ -102,7 +108,7 @@ const FILL_PURPLE: FillStyle = FillStyle::Plain(Color::dark_slate_blue());
 const FILL_RULE: FillRule = FillRule::NonZero;
 
 implement_test! {
-    triangle_test, canvas_description |
+    triangle_test, canvas_description, default_callback |
     BIG_TRIANGLE,               FILL_WHITE,    FILL_RULE, default_blending,
     SMALL_WHITE_TRIANGLE,       FILL_WHITE,    FILL_RULE, default_blending,
     RED_TRIANGLES,              FILL_RED,      FILL_RULE, default_blending,

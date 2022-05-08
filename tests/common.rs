@@ -1,11 +1,12 @@
 use sha2::{Digest, Sha256};
+use verg::canvas::Canvas;
 use verg::color::Color;
 use verg::renderer::blend_func;
 
 // We allow dead code because clippy gives a false positive.
 // The constant is used in `implement_test!`.
 #[allow(dead_code)]
-pub const REFERENCE_HASHES: [(&str, &str); 6] = [
+pub const REFERENCE_HASHES: [(&str, &str); 7] = [
     (
         "basic_test",
         "95AEB28CB13578C558F745AD4DFCE5DF3BCAD3E11C0C9F15077ED3144C6D4D98",
@@ -16,7 +17,7 @@ pub const REFERENCE_HASHES: [(&str, &str); 6] = [
     ),
     (
         "line_test",
-        "7A385C20B75FF0C71137820FDCC7899654774DC123517EB7844531381A2C042F",
+        "B63BD4212971997150E7FE594444F58C539111AB72363D7C584C25DA7DE692CE",
     ),
     (
         "rect_test",
@@ -28,7 +29,11 @@ pub const REFERENCE_HASHES: [(&str, &str); 6] = [
     ),
     (
         "alpha_blending_test",
-        "70219E61B2E80A622F1288FCEA6F8E93F38213F6EAE3207637974B844505FC83",
+        "6C9B6E7943B889530E2CDC9BAA64FC70551AFD233A2E85C4E448DCD261AA0832",
+    ),
+    (
+        "affine_transforms_test",
+        "72D232FA2940A3ED66F3465073088EC35989131664B18888D5DBAB8C725226EE",
     ),
 ];
 
@@ -44,16 +49,24 @@ pub fn default_blending(src: &Color, dest: &Color) -> Color {
     blend_func::source_over(src, dest)
 }
 
+#[allow(dead_code)]
+pub fn default_callback(_canvas: &mut Canvas) {}
+
 #[macro_export]
 macro_rules! implement_test {
-    ( $($name:ident, $canvas:ident)? | $($path:expr, $fill_style:expr, $fill_rule:expr, $blend:ident),* ) => {
+    ( $($name:ident, $canvas:ident, $custom:ident)? | $($path:expr, $fill_style:expr, $fill_rule:expr, $blend:ident),* ) => {
         #[test]
         fn $($name)?() {
+            let _transform = |p: &Point| -> Point { *p };
             let mut canvas = Canvas::new($($canvas)?());
             $(
                 canvas.set_blending_function($blend);
-                canvas.draw_shape(&($path), $fill_style, $fill_rule);
+                canvas.draw_shape(&($path), $fill_style, $fill_rule, _transform);
             )*
+
+            $(
+                $custom(&mut canvas);
+            )?
 
             let u8_buffer = canvas.to_u8();
 

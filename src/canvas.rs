@@ -1,5 +1,5 @@
 use crate::color::{Color, FillRule, FillStyle};
-use crate::geometry::Path;
+use crate::geometry::{Path, Point};
 use crate::renderer::{blend_func, fill_path, render_path, BlendFunc, NUM_CHANNELS};
 use std::vec::Vec;
 
@@ -9,10 +9,19 @@ pub struct AccumulationCell {
     pub id: i32,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct ViewBox {
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
+}
+
 #[derive(Debug)]
 pub struct CanvasDescription {
     pub width: usize,
     pub height: usize,
+    pub viewbox: ViewBox,
     pub pixel_size: usize,
     pub background_color: Color,
 }
@@ -22,6 +31,12 @@ impl Default for CanvasDescription {
         CanvasDescription {
             width: 600,
             height: 600,
+            viewbox: ViewBox {
+                x: 0.0,
+                y: 0.0,
+                width: 600.0,
+                height: 600.0,
+            },
             pixel_size: 256,
             background_color: Color::default(),
         }
@@ -78,8 +93,14 @@ impl Canvas {
             .collect::<Vec<u8>>();
     }
 
-    pub fn draw_shape(&mut self, path: Path, fill_style: FillStyle, fill_rule: FillRule) {
-        let bounds = render_path(&mut self.accumulation_buffer, &self.desc, path);
+    pub fn draw_shape(
+        &mut self,
+        path: Path,
+        fill_style: FillStyle,
+        fill_rule: FillRule,
+        transform: impl Fn(&Point) -> Point,
+    ) {
+        let bounds = render_path(&mut self.accumulation_buffer, &self.desc, path, transform);
         fill_path(
             &mut self.accumulation_buffer,
             &mut self.buffer,

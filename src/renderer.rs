@@ -1,10 +1,10 @@
-use std::cmp::Ordering;
-
 use crate::{
     canvas::{AccumulationCell, CanvasDescription},
     color::{clamp, Color, FillRule, FillStyle},
     geometry::{BoundingBox, Path, PathOps, Point},
+    math::map_viewbox,
 };
+use std::cmp::Ordering;
 
 ///
 /// Parameters `src` and `dest`.
@@ -255,6 +255,7 @@ pub fn render_path(
     accumulation_buffer: &mut [AccumulationCell],
     desc: &CanvasDescription,
     path: Path,
+    transform: impl Fn(&Point) -> Point,
 ) -> BoundingBox {
     let mut result = BoundingBox::default();
     let mut update_bounds = |x: f64, y: f64| {
@@ -268,67 +269,83 @@ pub fn render_path(
         result.max_y = usize::max(result.max_y, y);
     };
 
-    let mut start_point = Point {
-        x: 0.0_f64,
-        y: 0.0_f64,
-    };
-    let mut currently_at = Point {
-        x: 0.0_f64,
-        y: 0.0_f64,
-    };
-
+    let mut start_point = Point { x: 0.0, y: 0.0 };
+    let mut start_point_unmaped = Point { x: 0.0, y: 0.0 };
+    let mut currently_at = Point { x: 0.0, y: 0.0 };
+    let mut currently_at_unmaped = Point { x: 0.0, y: 0.0 };
     let mut line_id = 0;
 
     for op in path.iter() {
         match op {
             PathOps::MoveTo { x, y } => {
-                currently_at.x = *x;
-                currently_at.y = *y;
+                let p = transform(&Point { x: *x, y: *y });
+                let p = map_viewbox(desc, &p);
 
-                start_point.x = *x;
-                start_point.y = *y;
+                currently_at.x = p.x;
+                currently_at.y = p.y;
 
-                update_bounds(*x, *y);
+                currently_at_unmaped.x = *x;
+                currently_at_unmaped.y = *y;
+
+                start_point.x = p.x;
+                start_point.y = p.y;
+
+                start_point_unmaped.x = *x;
+                start_point_unmaped.y = *y;
+
+                update_bounds(p.x, p.y);
             }
             PathOps::MoveToRel { x, y } => {
-                currently_at.x += *x;
-                currently_at.y += *y;
+                let p = transform(&Point {
+                    x: currently_at_unmaped.x + *x,
+                    y: currently_at_unmaped.y + *y,
+                });
+                let p = map_viewbox(desc, &p);
+
+                currently_at.x = p.x;
+                currently_at.y = p.y;
+
+                currently_at_unmaped.x += *x;
+                currently_at_unmaped.y += *y;
 
                 start_point.x = currently_at.x;
                 start_point.y = currently_at.y;
 
+                start_point_unmaped.x += *x;
+                start_point_unmaped.y += *y;
+
                 update_bounds(currently_at.x, currently_at.y);
             }
             PathOps::LineTo { x, y } => {
+                let p = transform(&Point { x: *x, y: *y });
+                let p = map_viewbox(desc, &p);
+
                 line_id += 1;
-                draw_line(
-                    accumulation_buffer,
-                    desc,
-                    &currently_at,
-                    &Point { x: *x, y: *y },
-                    line_id,
-                );
+                draw_line(accumulation_buffer, desc, &currently_at, &p, line_id);
 
-                currently_at.x = *x;
-                currently_at.y = *y;
+                currently_at.x = p.x;
+                currently_at.y = p.y;
 
-                update_bounds(*x, *y);
+                currently_at_unmaped.x = *x;
+                currently_at_unmaped.y = *y;
+
+                update_bounds(p.x, p.y);
             }
             PathOps::LineToRel { x, y } => {
-                line_id += 1;
-                draw_line(
-                    accumulation_buffer,
-                    desc,
-                    &currently_at,
-                    &Point {
-                        x: currently_at.x + *x,
-                        y: currently_at.y + *y,
-                    },
-                    line_id,
-                );
+                let p = transform(&Point {
+                    x: currently_at_unmaped.x + *x,
+                    y: currently_at_unmaped.y + *y,
+                });
+                let p = map_viewbox(desc, &p);
 
-                currently_at.x += *x;
-                currently_at.y += *y;
+                line_id += 1;
+                draw_line(accumulation_buffer, desc, &currently_at, &p, line_id);
+
+                currently_at.x = p.x;
+                currently_at.y = p.y;
+
+                currently_at_unmaped.x += *x;
+                currently_at_unmaped.y += *y;
 
                 update_bounds(currently_at.x, currently_at.y);
             }
@@ -344,6 +361,9 @@ pub fn render_path(
 
                 currently_at.x = start_point.x;
                 currently_at.y = start_point.y;
+
+                currently_at_unmaped.x = start_point_unmaped.x;
+                currently_at_unmaped.y = start_point_unmaped.y;
             }
         }
     }
@@ -405,11 +425,10 @@ pub fn fill_path(
             FillRule::EvenOdd => alpha_fill_even_odd,
         };
 
-        for x in bounds.min_x..bounds.max_x {
+        for x in bounds.min_x..=bounds.max_x {
             let cell = &mut accumulation_buffer[y * desc.width + x];
             let alpha = get_alpha(cell, &mut prev_cell, &mut acc, &mut filling);
-            cell.area = 0.0_f32;
-
+            cell.area = 0.0;
             let pixel_offset: usize = y * desc.width * NUM_CHANNELS + x * NUM_CHANNELS;
             let dest = Color {
                 r: color_buffer[pixel_offset],
