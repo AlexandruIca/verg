@@ -1,10 +1,10 @@
 // This test draws some open paths using only lines.
 
-use crate::common::default_blending;
+use crate::common::{default_blending, default_callback};
 use verg::{
     canvas::{Canvas, CanvasDescription, ViewBox},
     color::{Color, FillRule, FillStyle},
-    geometry::PathOps,
+    geometry::{PathOps, Point},
 };
 
 mod common;
@@ -59,7 +59,7 @@ const FILL_STYLE: FillStyle = FillStyle::Plain(Color::red());
 const FILL_RULE: FillRule = FillRule::NonZero;
 
 implement_test! {
-    line_test, canvas_description |
+    line_test, canvas_description, default_callback |
     LINES[0], FILL_STYLE, FILL_RULE, default_blending,
     LINES[1], FILL_STYLE, FILL_RULE, default_blending,
     LINES[2], FILL_STYLE, FILL_RULE, default_blending,

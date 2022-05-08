@@ -1,10 +1,10 @@
 // This test draws a background on the whole canvas.
 
-use crate::common::default_blending;
+use crate::common::{default_blending, default_callback};
 use verg::{
     canvas::{Canvas, CanvasDescription, ViewBox},
     color::{Color, FillRule, FillStyle},
-    geometry::PathOps,
+    geometry::{PathOps, Point},
 };
 
 mod common;
@@ -49,6 +49,6 @@ static FILL_STYLE: FillStyle = FillStyle::Plain(Color::dark_slate_blue());
 const FILL_RULE: FillRule = FillRule::NonZero;
 
 implement_test! {
-    basic_test, canvas_description |
+    basic_test, canvas_description, default_callback |
     PATH, FILL_STYLE, FILL_RULE, default_blending
 }
