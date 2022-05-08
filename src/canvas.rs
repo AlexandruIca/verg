@@ -1,5 +1,5 @@
 use crate::color::{Color, FillRule, FillStyle};
-use crate::geometry::Path;
+use crate::geometry::{Path, Point};
 use crate::renderer::{blend_func, fill_path, render_path, BlendFunc, NUM_CHANNELS};
 use std::vec::Vec;
 
@@ -93,8 +93,14 @@ impl Canvas {
             .collect::<Vec<u8>>();
     }
 
-    pub fn draw_shape(&mut self, path: Path, fill_style: FillStyle, fill_rule: FillRule) {
-        let bounds = render_path(&mut self.accumulation_buffer, &self.desc, path);
+    pub fn draw_shape(
+        &mut self,
+        path: Path,
+        fill_style: FillStyle,
+        fill_rule: FillRule,
+        transform: impl Fn(&Point) -> Point,
+    ) {
+        let bounds = render_path(&mut self.accumulation_buffer, &self.desc, path, transform);
         fill_path(
             &mut self.accumulation_buffer,
             &mut self.buffer,

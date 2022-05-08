@@ -255,6 +255,7 @@ pub fn render_path(
     accumulation_buffer: &mut [AccumulationCell],
     desc: &CanvasDescription,
     path: Path,
+    transform: impl Fn(&Point) -> Point,
 ) -> BoundingBox {
     let mut result = BoundingBox::default();
     let mut update_bounds = |x: f64, y: f64| {
@@ -272,13 +273,13 @@ pub fn render_path(
     let mut start_point_unmaped = Point { x: 0.0, y: 0.0 };
     let mut currently_at = Point { x: 0.0, y: 0.0 };
     let mut currently_at_unmaped = Point { x: 0.0, y: 0.0 };
-
     let mut line_id = 0;
 
     for op in path.iter() {
         match op {
             PathOps::MoveTo { x, y } => {
-                let p = map_viewbox(desc, &Point { x: *x, y: *y });
+                let p = transform(&Point { x: *x, y: *y });
+                let p = map_viewbox(desc, &p);
 
                 currently_at.x = p.x;
                 currently_at.y = p.y;
@@ -295,13 +296,11 @@ pub fn render_path(
                 update_bounds(p.x, p.y);
             }
             PathOps::MoveToRel { x, y } => {
-                let p = map_viewbox(
-                    desc,
-                    &Point {
-                        x: currently_at_unmaped.x + *x,
-                        y: currently_at_unmaped.y + *y,
-                    },
-                );
+                let p = transform(&Point {
+                    x: currently_at_unmaped.x + *x,
+                    y: currently_at_unmaped.y + *y,
+                });
+                let p = map_viewbox(desc, &p);
 
                 currently_at.x = p.x;
                 currently_at.y = p.y;
@@ -318,7 +317,8 @@ pub fn render_path(
                 update_bounds(currently_at.x, currently_at.y);
             }
             PathOps::LineTo { x, y } => {
-                let p = map_viewbox(desc, &Point { x: *x, y: *y });
+                let p = transform(&Point { x: *x, y: *y });
+                let p = map_viewbox(desc, &p);
 
                 line_id += 1;
                 draw_line(accumulation_buffer, desc, &currently_at, &p, line_id);
@@ -332,13 +332,11 @@ pub fn render_path(
                 update_bounds(p.x, p.y);
             }
             PathOps::LineToRel { x, y } => {
-                let p = map_viewbox(
-                    desc,
-                    &Point {
-                        x: currently_at_unmaped.x + *x,
-                        y: currently_at_unmaped.y + *y,
-                    },
-                );
+                let p = transform(&Point {
+                    x: currently_at_unmaped.x + *x,
+                    y: currently_at_unmaped.y + *y,
+                });
+                let p = map_viewbox(desc, &p);
 
                 line_id += 1;
                 draw_line(accumulation_buffer, desc, &currently_at, &p, line_id);
@@ -427,11 +425,10 @@ pub fn fill_path(
             FillRule::EvenOdd => alpha_fill_even_odd,
         };
 
-        for x in bounds.min_x..bounds.max_x {
+        for x in bounds.min_x..=bounds.max_x {
             let cell = &mut accumulation_buffer[y * desc.width + x];
             let alpha = get_alpha(cell, &mut prev_cell, &mut acc, &mut filling);
-            cell.area = 0.0_f32;
-
+            cell.area = 0.0;
             let pixel_offset: usize = y * desc.width * NUM_CHANNELS + x * NUM_CHANNELS;
             let dest = Color {
                 r: color_buffer[pixel_offset],
