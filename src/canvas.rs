@@ -22,7 +22,7 @@ pub struct CanvasDescription {
     pub width: usize,
     pub height: usize,
     pub viewbox: ViewBox,
-    pub pixel_size: usize,
+    pub tolerance: f64,
     pub background_color: Color,
 }
 
@@ -37,7 +37,7 @@ impl Default for CanvasDescription {
                 width: 600.0,
                 height: 600.0,
             },
-            pixel_size: 256,
+            tolerance: 1.5,
             background_color: Color::default(),
         }
     }

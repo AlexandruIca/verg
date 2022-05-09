@@ -1,7 +1,7 @@
 use crate::{
     canvas::{AccumulationCell, Canvas},
     color::{clamp, Color, FillRule, FillStyle},
-    geometry::{BoundingBox, Path, PathOps, Point},
+    geometry::{BoundingBox, Path, PathOps, Point, QuadraticBezier},
     math::map_viewbox,
 };
 use std::cmp::Ordering;
@@ -253,6 +253,18 @@ pub fn draw_line(state: &mut RenderState, start: &Point, end: &Point) {
     }
 }
 
+pub fn draw_quad_bezier(state: &mut RenderState, curve: &QuadraticBezier) {
+    let points = curve
+        .subdivide(state.canvas.desc.tolerance)
+        .iter()
+        .map(|t: &f64| curve.eval(*t))
+        .collect::<Vec<Point>>();
+
+    points.windows(2).for_each(|p: &[Point]| {
+        draw_line(state, &p[0], &p[1]);
+    });
+}
+
 pub fn render_path(
     state: &mut RenderState,
     path: Path,
@@ -350,6 +362,50 @@ pub fn render_path(
                 currently_at_unmaped.x += *x;
                 currently_at_unmaped.y += *y;
 
+                update_bounds(currently_at.x, currently_at.y);
+            }
+            PathOps::QuadTo { x1, y1, x2, y2 } => {
+                let p1 = transform(&Point { x: *x1, y: *y1 });
+                let p2 = transform(&Point { x: *x2, y: *y2 });
+
+                let p1 = map_viewbox(&desc, &p1);
+                let p2 = map_viewbox(&desc, &p2);
+
+                state.id += 1;
+                draw_quad_bezier(state, &QuadraticBezier::new(currently_at, p1, p2));
+
+                currently_at.x = p2.x;
+                currently_at.y = p2.y;
+
+                currently_at_unmaped.x = *x2;
+                currently_at_unmaped.y = *y2;
+
+                update_bounds(p1.x, p1.y);
+                update_bounds(currently_at.x, currently_at.y);
+            }
+            PathOps::QuadToRel { x1, y1, x2, y2 } => {
+                let p1 = transform(&Point {
+                    x: currently_at_unmaped.x + *x1,
+                    y: currently_at_unmaped.y + *y1,
+                });
+                let p2 = transform(&Point {
+                    x: currently_at_unmaped.x + *x2,
+                    y: currently_at_unmaped.y + *y2,
+                });
+
+                let p1 = map_viewbox(&desc, &p1);
+                let p2 = map_viewbox(&desc, &p2);
+
+                state.id += 1;
+                draw_quad_bezier(state, &QuadraticBezier::new(currently_at, p1, p2));
+
+                currently_at.x = p2.x;
+                currently_at.y = p2.y;
+
+                currently_at_unmaped.x = *x2;
+                currently_at_unmaped.y = *y2;
+
+                update_bounds(p1.x, p1.y);
                 update_bounds(currently_at.x, currently_at.y);
             }
             PathOps::Close => {
