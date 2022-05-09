@@ -1,6 +1,5 @@
-// This test draws a background on the whole canvas.
+// This test draws using affine transformations applied on paths.
 
-// use crate::common::default_blending;
 use verg::{
     canvas::{Canvas, CanvasDescription, ViewBox},
     color::{Color, FillRule, FillStyle},
