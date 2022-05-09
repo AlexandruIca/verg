@@ -1,5 +1,5 @@
 use crate::{
-    canvas::{AccumulationCell, CanvasDescription},
+    canvas::{AccumulationCell, Canvas},
     color::{clamp, Color, FillRule, FillStyle},
     geometry::{BoundingBox, Path, PathOps, Point},
     math::map_viewbox,
@@ -139,6 +139,11 @@ fn update_cell(area: f32, cell: &mut AccumulationCell, id: i32) {
     cell.id = id;
 }
 
+pub struct RenderState<'a> {
+    pub canvas: &'a mut Canvas,
+    pub id: i32,
+}
+
 ///
 /// # Note
 ///
@@ -149,15 +154,12 @@ fn update_cell(area: f32, cell: &mut AccumulationCell, id: i32) {
 ///
 /// id: A number that should differentiate dfferent segments that are part of the same `Path`.
 ///
-pub fn draw_line(
-    accumulation_buffer: &mut [AccumulationCell],
-    desc: &CanvasDescription,
-    start: &Point,
-    end: &Point,
-    id: i32,
-) {
+pub fn draw_line(state: &mut RenderState, start: &Point, end: &Point) {
     let p0 = start;
     let p1 = end;
+    let (width, height) = (state.canvas.desc.width, state.canvas.desc.height);
+    let accumulation_buffer = &mut state.canvas.accumulation_buffer;
+    let id = state.id;
 
     if (p0.y - p1.y).abs() <= f64::EPSILON {
         return;
@@ -171,8 +173,8 @@ pub fn draw_line(
     let mut x = p0.x;
     let y0 = p0.y as usize;
 
-    for y in y0..desc.height.min(p1.y.ceil() as usize) {
-        let linestart = y * desc.width;
+    for y in y0..height.min(p1.y.ceil() as usize) {
+        let linestart = y * width;
         let dy = ((y + 1) as f64).min(p1.y) - (y as f64).max(p0.y);
         let xnext = x + dxdy * dy;
         let d = dy * dir;
@@ -252,11 +254,13 @@ pub fn draw_line(
 }
 
 pub fn render_path(
-    accumulation_buffer: &mut [AccumulationCell],
-    desc: &CanvasDescription,
+    state: &mut RenderState,
     path: Path,
     transform: impl Fn(&Point) -> Point,
 ) -> BoundingBox {
+    let desc = state.canvas.desc;
+    state.id = 0;
+
     let mut result = BoundingBox::default();
     let mut update_bounds = |x: f64, y: f64| {
         let x = x as usize;
@@ -273,13 +277,12 @@ pub fn render_path(
     let mut start_point_unmaped = Point { x: 0.0, y: 0.0 };
     let mut currently_at = Point { x: 0.0, y: 0.0 };
     let mut currently_at_unmaped = Point { x: 0.0, y: 0.0 };
-    let mut line_id = 0;
 
     for op in path.iter() {
         match op {
             PathOps::MoveTo { x, y } => {
                 let p = transform(&Point { x: *x, y: *y });
-                let p = map_viewbox(desc, &p);
+                let p = map_viewbox(&desc, &p);
 
                 currently_at.x = p.x;
                 currently_at.y = p.y;
@@ -300,7 +303,7 @@ pub fn render_path(
                     x: currently_at_unmaped.x + *x,
                     y: currently_at_unmaped.y + *y,
                 });
-                let p = map_viewbox(desc, &p);
+                let p = map_viewbox(&desc, &p);
 
                 currently_at.x = p.x;
                 currently_at.y = p.y;
@@ -318,10 +321,10 @@ pub fn render_path(
             }
             PathOps::LineTo { x, y } => {
                 let p = transform(&Point { x: *x, y: *y });
-                let p = map_viewbox(desc, &p);
+                let p = map_viewbox(&desc, &p);
 
-                line_id += 1;
-                draw_line(accumulation_buffer, desc, &currently_at, &p, line_id);
+                state.id += 1;
+                draw_line(state, &currently_at, &p);
 
                 currently_at.x = p.x;
                 currently_at.y = p.y;
@@ -336,10 +339,10 @@ pub fn render_path(
                     x: currently_at_unmaped.x + *x,
                     y: currently_at_unmaped.y + *y,
                 });
-                let p = map_viewbox(desc, &p);
+                let p = map_viewbox(&desc, &p);
 
-                line_id += 1;
-                draw_line(accumulation_buffer, desc, &currently_at, &p, line_id);
+                state.id += 1;
+                draw_line(state, &currently_at, &p);
 
                 currently_at.x = p.x;
                 currently_at.y = p.y;
@@ -350,14 +353,8 @@ pub fn render_path(
                 update_bounds(currently_at.x, currently_at.y);
             }
             PathOps::Close => {
-                line_id += 1;
-                draw_line(
-                    accumulation_buffer,
-                    desc,
-                    &currently_at,
-                    &start_point,
-                    line_id,
-                );
+                state.id += 1;
+                draw_line(state, &currently_at, &start_point);
 
                 currently_at.x = start_point.x;
                 currently_at.y = start_point.y;
@@ -408,14 +405,16 @@ fn alpha_fill_non_zero(
 }
 
 pub fn fill_path(
-    accumulation_buffer: &mut [AccumulationCell],
-    color_buffer: &mut [f64],
-    desc: &CanvasDescription,
+    state: &mut RenderState,
     fill_style: FillStyle,
     fill_rule: FillRule,
     bounds: &BoundingBox,
-    blend: BlendFunc,
 ) {
+    let accumulation_buffer = &mut state.canvas.accumulation_buffer;
+    let desc = &state.canvas.desc;
+    let color_buffer = &mut state.canvas.buffer;
+    let blend = state.canvas.blend;
+
     for y in bounds.min_y..bounds.max_y {
         let mut acc = 0.0_f32;
         let mut filling = -1.0_f32;
