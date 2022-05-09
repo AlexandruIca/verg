@@ -6,7 +6,7 @@ use verg::renderer::blend_func;
 // We allow dead code because clippy gives a false positive.
 // The constant is used in `implement_test!`.
 #[allow(dead_code)]
-pub const REFERENCE_HASHES: [(&str, &str); 7] = [
+pub const REFERENCE_HASHES: [(&str, &str); 8] = [
     (
         "basic_test",
         "95AEB28CB13578C558F745AD4DFCE5DF3BCAD3E11C0C9F15077ED3144C6D4D98",
@@ -34,6 +34,10 @@ pub const REFERENCE_HASHES: [(&str, &str); 7] = [
     (
         "affine_transforms_test",
         "72D232FA2940A3ED66F3465073088EC35989131664B18888D5DBAB8C725226EE",
+    ),
+    (
+        "curve_test",
+        "473FA79821D58006E4424FD413164ADE79F4C8D7309D247EC7EFAED21161C62E",
     ),
 ];
 
