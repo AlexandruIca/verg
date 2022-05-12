@@ -1,6 +1,6 @@
 use crate::color::{Color, FillRule, FillStyle};
 use crate::geometry::{Path, Point};
-use crate::renderer::{blend_func, fill_path, render_path, BlendFunc, NUM_CHANNELS};
+use crate::renderer::{blend_func, fill_path, render_path, BlendFunc, RenderState, NUM_CHANNELS};
 use std::vec::Vec;
 
 #[derive(Debug, Clone, Copy)]
@@ -17,12 +17,12 @@ pub struct ViewBox {
     pub height: f64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct CanvasDescription {
     pub width: usize,
     pub height: usize,
     pub viewbox: ViewBox,
-    pub pixel_size: usize,
+    pub tolerance: f64,
     pub background_color: Color,
 }
 
@@ -37,17 +37,17 @@ impl Default for CanvasDescription {
                 width: 600.0,
                 height: 600.0,
             },
-            pixel_size: 256,
+            tolerance: 1.5,
             background_color: Color::default(),
         }
     }
 }
 
 pub struct Canvas {
-    buffer: Vec<f64>,
-    accumulation_buffer: Vec<AccumulationCell>,
+    pub buffer: Vec<f64>,
+    pub accumulation_buffer: Vec<AccumulationCell>,
     pub desc: CanvasDescription,
-    blend: BlendFunc,
+    pub blend: BlendFunc,
 }
 
 impl Canvas {
@@ -100,15 +100,11 @@ impl Canvas {
         fill_rule: FillRule,
         transform: impl Fn(&Point) -> Point,
     ) {
-        let bounds = render_path(&mut self.accumulation_buffer, &self.desc, path, transform);
-        fill_path(
-            &mut self.accumulation_buffer,
-            &mut self.buffer,
-            &self.desc,
-            fill_style,
-            fill_rule,
-            &bounds,
-            self.blend,
-        )
+        let mut state = RenderState {
+            canvas: self,
+            id: 0,
+        };
+        let bounds = render_path(&mut state, path, transform);
+        fill_path(&mut state, fill_style, fill_rule, &bounds)
     }
 }

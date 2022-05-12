@@ -90,7 +90,5 @@ pub fn map_viewbox(canvas: &CanvasDescription, point: &Point) -> Point {
     translate_y += (e_height - vb_height * scale_y) / 2.0;
 
     let translated = translate(point, translate_x, translate_y);
-    let result = scale(&translated, scale_x, scale_y);
-
-    result
+    scale(&translated, scale_x, scale_y)
 }
