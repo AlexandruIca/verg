@@ -129,6 +129,15 @@ impl Color {
             a: 1.0,
         }
     }
+
+    pub const fn steel_blue() -> Self {
+        Self {
+            r: 0.274,
+            g: 0.509,
+            b: 0.705,
+            a: 1.0,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
