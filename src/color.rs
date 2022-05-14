@@ -1,3 +1,5 @@
+use crate::math::Angle;
+
 #[derive(Debug, Clone, Copy)]
 pub struct Color {
     pub r: f64,
@@ -141,8 +143,12 @@ impl Color {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum FillStyle {
+pub enum FillStyle<'a> {
     Plain(Color),
+    LinearGradient {
+        stops: &'a [(Color, f64)],
+        angle: Angle,
+    },
 }
 
 #[derive(Debug, Clone, Copy)]

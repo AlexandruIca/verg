@@ -2,7 +2,7 @@ use crate::{
     canvas::{AccumulationCell, Canvas},
     color::{clamp, Color, FillRule, FillStyle},
     geometry::{BoundingBox, CubicBezier, Path, PathOps, Point, QuadraticBezier},
-    math::map_viewbox,
+    math::{map_viewbox, rotate_around, Angle},
 };
 use std::cmp::Ordering;
 
@@ -539,6 +539,63 @@ fn alpha_fill_non_zero(
     acc.abs()
 }
 
+fn get_linear_gradient_color_at(
+    x: usize,
+    y: usize,
+    bounds: &BoundingBox,
+    stops: &[(Color, f64)],
+    angle: Angle,
+    alpha: f32,
+) -> Color {
+    let (min_x, max_x) = (bounds.min_x as f64, bounds.max_x as f64);
+    let (min_y, max_y) = (bounds.min_y as f64, bounds.max_y as f64);
+    let gradient_width = max_x - min_x;
+    // Offset angle by PI/2 because of the coordinate system
+    let angle = Angle::from_radians(angle.to_radians() - std::f64::consts::PI / 2.0);
+    let point = rotate_around(
+        &Point {
+            x: x as f64,
+            y: y as f64,
+        },
+        &Point {
+            x: (min_x + max_x) / 2.0,
+            y: (min_y + max_y) / 2.0,
+        },
+        angle,
+    );
+
+    let clamped_x = clamp(point.x, min_x, max_x);
+    let fx = (clamped_x - min_x) / gradient_width;
+    let mut stop_index = 0_usize;
+
+    while stop_index < stops.len() && stops[stop_index].1 < fx {
+        stop_index += 1;
+    }
+
+    stop_index = clamp(stop_index, 0, stops.len() - 1);
+
+    if stop_index == 0 {
+        let mut c = stops[0].0;
+        c.a = alpha as f64;
+
+        return c;
+    }
+
+    let (mut c1, mut c2) = (stops[stop_index - 1].0, stops[stop_index].0);
+    let (s1, s2) = (stops[stop_index - 1].1, stops[stop_index].1);
+    let t = (fx - s1) / (s2 - s1);
+
+    c1.a = alpha as f64;
+    c2.a = alpha as f64;
+
+    Color {
+        r: (1.0 - t) * c1.r + t * c2.r,
+        g: (1.0 - t) * c1.g + t * c2.g,
+        b: (1.0 - t) * c1.b + t * c2.b,
+        a: (1.0 - t) * c1.a + t * c2.a,
+    }
+}
+
 pub fn fill_path(
     state: &mut RenderState,
     fill_style: FillStyle,
@@ -577,6 +634,9 @@ pub fn fill_path(
                     b,
                     a: f64::min(alpha as f64, a),
                 },
+                FillStyle::LinearGradient { stops, angle } => {
+                    get_linear_gradient_color_at(x, y, &bounds, stops, angle, alpha)
+                }
             };
 
             let resulting_color = blend(&src, &dest);
