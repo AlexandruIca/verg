@@ -4,6 +4,12 @@ pub struct Point {
     pub y: f64,
 }
 
+impl Point {
+    pub fn distance_to(&self, other: &Point) -> f64 {
+        f64::hypot(self.x - other.x, self.y - other.y)
+    }
+}
+
 #[derive(Clone, Copy)]
 pub enum PathOps {
     MoveTo {

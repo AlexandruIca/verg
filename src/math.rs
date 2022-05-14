@@ -2,7 +2,7 @@ use crate::canvas::CanvasDescription;
 use crate::geometry::Point;
 
 #[derive(Debug, Clone, Copy, Default)]
-pub struct Angle(f64);
+pub struct Angle(pub f64);
 
 impl Angle {
     pub fn from_radians(radians: f64) -> Self {
