@@ -1,3 +1,4 @@
+use crate::geometry::Point;
 use crate::math::Angle;
 
 #[derive(Debug, Clone, Copy)]
@@ -148,6 +149,10 @@ pub enum FillStyle<'a> {
     LinearGradient {
         stops: &'a [(Color, f64)],
         angle: Angle,
+    },
+    RadialGradient {
+        stops: &'a [(Color, f64)],
+        translation: Point,
     },
 }
 

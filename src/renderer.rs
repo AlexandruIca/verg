@@ -2,7 +2,7 @@ use crate::{
     canvas::{AccumulationCell, Canvas},
     color::{clamp, Color, FillRule, FillStyle},
     geometry::{BoundingBox, CubicBezier, Path, PathOps, Point, QuadraticBezier},
-    math::{map_viewbox, rotate_around, Angle},
+    math::{map_viewbox, rotate_around, translate, Angle},
 };
 use std::cmp::Ordering;
 
@@ -596,6 +596,64 @@ fn get_linear_gradient_color_at(
     }
 }
 
+fn get_radial_gradient_color_at(
+    x: usize,
+    y: usize,
+    bounds: &BoundingBox,
+    stops: &[(Color, f64)],
+    translation: Point,
+    alpha: f32,
+) -> Color {
+    let (min_x, max_x) = (bounds.min_x as f64, bounds.max_x as f64);
+    let (min_y, max_y) = (bounds.min_y as f64, bounds.max_y as f64);
+    let gradient_width = (max_x - min_x) / 2.0;
+    let center = Point {
+        x: (min_x + max_x) / 2.0,
+        y: (min_y + max_y) / 2.0,
+    };
+    let point = translate(
+        &Point {
+            x: x as f64,
+            y: y as f64,
+        },
+        translation.x,
+        translation.y,
+    );
+    let clamped = Point {
+        x: clamp(point.x, min_x, max_x),
+        y: clamp(point.y, min_y, max_y),
+    };
+    let dist = clamped.distance_to(&center).abs() / gradient_width;
+    let mut stop_index = 0_usize;
+
+    while stop_index < stops.len() && stops[stop_index].1 < dist {
+        stop_index += 1;
+    }
+
+    stop_index = clamp(stop_index, 0, stops.len() - 1);
+
+    if stop_index == 0 {
+        let mut c = stops[0].0;
+        c.a = alpha as f64;
+
+        return c;
+    }
+
+    let (mut c1, mut c2) = (stops[stop_index - 1].0, stops[stop_index].0);
+    let (s1, s2) = (stops[stop_index - 1].1, stops[stop_index].1);
+    let t = (dist - s1) / (s2 - s1);
+
+    c1.a = alpha as f64;
+    c2.a = alpha as f64;
+
+    Color {
+        r: (1.0 - t) * c1.r + t * c2.r,
+        g: (1.0 - t) * c1.g + t * c2.g,
+        b: (1.0 - t) * c1.b + t * c2.b,
+        a: (1.0 - t) * c1.a + t * c2.a,
+    }
+}
+
 pub fn fill_path(
     state: &mut RenderState,
     fill_style: FillStyle,
@@ -636,6 +694,9 @@ pub fn fill_path(
                 },
                 FillStyle::LinearGradient { stops, angle } => {
                     get_linear_gradient_color_at(x, y, &bounds, stops, angle, alpha)
+                }
+                FillStyle::RadialGradient { stops, translation } => {
+                    get_radial_gradient_color_at(x, y, &bounds, stops, translation, alpha)
                 }
             };
 

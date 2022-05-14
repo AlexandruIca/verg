@@ -45,36 +45,6 @@ const SQUARE: [PathOps; 5] = [
     PathOps::Close,
 ];
 
-const HEX_WIDTH: f64 = 200.0;
-const HEX_HEIGHT: f64 = 200.0;
-const HEX: [PathOps; 7] = [
-    PathOps::MoveTo {
-        x: HEX_WIDTH / 2.0,
-        y: 0.0,
-    },
-    PathOps::LineTo {
-        x: HEX_WIDTH,
-        y: HEX_HEIGHT / 3.0,
-    },
-    PathOps::LineTo {
-        x: HEX_WIDTH,
-        y: 2.0 * HEX_HEIGHT / 3.0,
-    },
-    PathOps::LineTo {
-        x: HEX_WIDTH / 2.0,
-        y: HEX_HEIGHT,
-    },
-    PathOps::LineTo {
-        x: 0.0,
-        y: 2.0 * HEX_HEIGHT / 3.0,
-    },
-    PathOps::LineTo {
-        x: 0.0,
-        y: HEX_HEIGHT / 3.0,
-    },
-    PathOps::Close,
-];
-
 const CURVED_TRIANGLE: [PathOps; 4] = [
     PathOps::MoveTo { x: 0.0, y: 180.0 },
     PathOps::CubicTo {
@@ -97,6 +67,27 @@ const CURVED_TRIANGLE: [PathOps; 4] = [
 ];
 
 fn callback(canvas: &mut Canvas) {
+    const NUM_VERTICES: f64 = 8.0;
+    const RADIUS: f64 = SQUARE_SIZE / 2.0;
+    const CX: f64 = SQUARE_SIZE / 2.0;
+    const CY: f64 = SQUARE_SIZE / 2.0;
+    let mut hex = Vec::<PathOps>::with_capacity(9);
+    let mut alpha = 0.0_f64;
+
+    while alpha < 360.0 {
+        let x = RADIUS * f64::cos(alpha.to_radians()) + CX;
+        let y = RADIUS * f64::sin(alpha.to_radians()) + CY;
+        if hex.is_empty() {
+            hex.push(PathOps::MoveTo { x, y });
+        } else {
+            hex.push(PathOps::LineTo { x, y });
+        }
+        alpha += 360.0 / NUM_VERTICES;
+    }
+
+    hex.push(PathOps::Close);
+
+    // Linear gradients:
     let square_stops = [
         (Color::white(), 0.0),
         (Color::red(), 0.5),
@@ -120,7 +111,7 @@ fn callback(canvas: &mut Canvas) {
         (Color::forest_green(), 1.0),
     ];
     canvas.draw_shape(
-        &HEX,
+        hex.as_slice(),
         FillStyle::LinearGradient {
             stops: &hex_stops,
             angle: Angle::from_degrees(45.0),
@@ -144,6 +135,56 @@ fn callback(canvas: &mut Canvas) {
         },
         FillRule::NonZero,
         |p: &Point| translate(p, 3.0 * GAP + 2.0 * SQUARE_SIZE, GAP),
+    );
+
+    // Radial gradients:
+    let square_stops = [
+        (Color::black(), 0.0),
+        (Color::red(), 0.5),
+        (Color::white(), 1.0),
+    ];
+    canvas.draw_shape(
+        &SQUARE,
+        FillStyle::RadialGradient {
+            stops: &square_stops,
+            translation: Point { x: 0.0, y: 0.0 },
+        },
+        FillRule::NonZero,
+        |p: &Point| translate(p, GAP, 2.0 * GAP + SQUARE_SIZE),
+    );
+
+    let hex_stops = [
+        (Color::forest_green(), 0.0),
+        (Color::steel_blue(), 0.25),
+        (Color::cyan(), 0.5),
+        (Color::forest_green(), 0.75),
+        (Color::coral(), 1.0),
+    ];
+    canvas.draw_shape(
+        hex.as_slice(),
+        FillStyle::RadialGradient {
+            stops: &hex_stops,
+            translation: Point { x: 0.0, y: 0.0 },
+        },
+        FillRule::NonZero,
+        |p: &Point| translate(p, 2.0 * GAP + SQUARE_SIZE, 2.0 * GAP + SQUARE_SIZE),
+    );
+
+    let triangle_stops = [
+        (Color::yellow(), 0.0),
+        (Color::forest_green(), 0.25),
+        (Color::white(), 0.5),
+        (Color::black(), 0.75),
+        (Color::cyan(), 1.0),
+    ];
+    canvas.draw_shape(
+        &CURVED_TRIANGLE,
+        FillStyle::RadialGradient {
+            stops: &triangle_stops,
+            translation: Point { x: 10.0, y: -5.0 },
+        },
+        FillRule::NonZero,
+        |p: &Point| translate(p, 3.0 * GAP + 2.0 * SQUARE_SIZE, 2.0 * GAP + SQUARE_SIZE),
     );
 }
 
