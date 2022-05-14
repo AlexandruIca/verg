@@ -154,6 +154,10 @@ pub enum FillStyle<'a> {
         stops: &'a [(Color, f64)],
         translation: Point,
     },
+    ConicGradient {
+        stops: &'a [(Color, Angle)],
+        translation: Point,
+    },
 }
 
 #[derive(Debug, Clone, Copy)]

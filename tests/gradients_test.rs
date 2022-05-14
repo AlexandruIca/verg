@@ -186,6 +186,59 @@ fn callback(canvas: &mut Canvas) {
         FillRule::NonZero,
         |p: &Point| translate(p, 3.0 * GAP + 2.0 * SQUARE_SIZE, 2.0 * GAP + SQUARE_SIZE),
     );
+
+    // Conic gradients:
+    let square_stops = [
+        (Color::blue(), Angle::from_degrees(0.0)),
+        (Color::yellow(), Angle::from_degrees(180.0)),
+    ];
+    canvas.draw_shape(
+        &SQUARE,
+        FillStyle::ConicGradient {
+            stops: &square_stops,
+            translation: Point { x: 0.0, y: 0.0 },
+        },
+        FillRule::NonZero,
+        |p: &Point| translate(p, GAP, 3.0 * GAP + 2.0 * SQUARE_SIZE),
+    );
+
+    let hex_stops = [
+        (Color::forest_green(), Angle::from_degrees(0.0)),
+        (Color::steel_blue(), Angle::from_degrees(90.0)),
+        (Color::cyan(), Angle::from_degrees(180.0)),
+        (Color::forest_green(), Angle::from_degrees(270.0)),
+    ];
+    canvas.draw_shape(
+        hex.as_slice(),
+        FillStyle::ConicGradient {
+            stops: &hex_stops,
+            translation: Point { x: 0.0, y: 0.0 },
+        },
+        FillRule::NonZero,
+        |p: &Point| translate(p, 2.0 * GAP + SQUARE_SIZE, 3.0 * GAP + 2.0 * SQUARE_SIZE),
+    );
+
+    let triangle_stops = [
+        (Color::yellow(), Angle::from_degrees(0.0)),
+        (Color::forest_green(), Angle::from_degrees(72.0)),
+        (Color::white(), Angle::from_degrees(216.0)),
+        (Color::black(), Angle::from_degrees(288.0)),
+    ];
+    canvas.draw_shape(
+        &CURVED_TRIANGLE,
+        FillStyle::ConicGradient {
+            stops: &triangle_stops,
+            translation: Point { x: 10.0, y: -5.0 },
+        },
+        FillRule::NonZero,
+        |p: &Point| {
+            translate(
+                p,
+                3.0 * GAP + 2.0 * SQUARE_SIZE,
+                3.0 * GAP + 2.0 * SQUARE_SIZE,
+            )
+        },
+    );
 }
 
 implement_test! {
