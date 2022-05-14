@@ -145,10 +145,6 @@ pub struct RenderState<'a> {
 }
 
 ///
-/// # Note
-///
-/// Expects `start` and `end` to be lexicographically sorted (by `x` and `y`).
-///
 /// Line drawing algorithm taken from here:
 /// - https://medium.com/@raphlinus/inside-the-fastest-font-renderer-in-the-world-75ae5270c445
 ///
@@ -754,13 +750,13 @@ pub fn fill_path(
                     a: f64::min(alpha as f64, a),
                 },
                 FillStyle::LinearGradient { stops, angle } => {
-                    get_linear_gradient_color_at(x, y, &bounds, stops, angle, alpha)
+                    get_linear_gradient_color_at(x, y, bounds, stops, angle, alpha)
                 }
                 FillStyle::RadialGradient { stops, translation } => {
-                    get_radial_gradient_color_at(x, y, &bounds, stops, translation, alpha)
+                    get_radial_gradient_color_at(x, y, bounds, stops, translation, alpha)
                 }
                 FillStyle::ConicGradient { stops, translation } => {
-                    get_conic_gradient_color_at(x, y, &bounds, stops, translation, alpha)
+                    get_conic_gradient_color_at(x, y, bounds, stops, translation, alpha)
                 }
             };
 
