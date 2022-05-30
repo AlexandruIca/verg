@@ -20,8 +20,9 @@
   {\guillemotright}
 
 \usepackage{listings, listings-rust}
+\usepackage{indentfirst}
 
-\title{Titlu}
+\title{Metodă Eficientă De a Desena Imagini Vectoriale}
 \author{Alexandru-Gabriel Ică}
 \date{\today}
 \makeatletter
@@ -30,27 +31,27 @@
 
 \begin{titlepage}
     \begin{figure}[!htb]
-    \centering
-    \begin{minipage}{0.19\textwidth}
-        \includegraphics[width=\linewidth]{img/UB_Logo.png}
-    \end{minipage}
-    \begin{minipage}{0.57\textwidth}
-        \large
-        \vspace{0.2cm}
-        \begin{center}
-            \textbf{Universitatea din București}
-        \end{center}
-        \vspace{0.3cm}
-        \begin{center}
-            \textbf{
-                Facultatea de \\
-                Matematică și Informatică
-            }
-        \end{center}
-    \end{minipage}
-    \begin{minipage}{0.21\textwidth}
-        \includegraphics[width=\linewidth]{img/FMI_Logo.png}
-    \end{minipage}
+        \centering
+        \begin{minipage}{0.19\textwidth}
+            \includegraphics[width=\linewidth]{img/UB_Logo.png}
+        \end{minipage}
+        \begin{minipage}{0.57\textwidth}
+            \large
+            \vspace{0.2cm}
+            \begin{center}
+                \textbf{Universitatea din București}
+            \end{center}
+            \vspace{0.3cm}
+            \begin{center}
+                \textbf{
+                    Facultatea de \\
+                    Matematică și Informatică
+                }
+            \end{center}
+        \end{minipage}
+        \begin{minipage}{0.21\textwidth}
+            \includegraphics[width=\linewidth]{img/FMI_Logo.png}
+        \end{minipage}
     \end{figure}
 
     \begin{center}
@@ -98,7 +99,7 @@ nu își pierde calitatea indiferent de rezoluția la care vrem să o afișăm. 
 pot fi stocate mai eficient din punct de vedere al spațiului deoarece nu trebuie să reținem pixeli
 la rezoluții mari.
 
-Grafica vectorială este folosită foarte des, una din principalele utilizări fiind randarea textului
+Grafica vectorială este folosită foarte des, una din principalele utilizări fiind desenarea textului
 pe ecran. Se poate regăsi și în interfețe grafice (de exemplu iconițe sau butoane) sau pe site-uri
 web (în format SVG \cite{svg_standard}).
 
@@ -106,18 +107,18 @@ web (în format SVG \cite{svg_standard}).
 integra pe aceasta în proiecte nu sunt chiar triviale, menționăm câteva din cele mai folosite biblioteci:
 \begin{itemize}
     \item{Skia \cite{skia_library}: o bibliotecă puternică, cu multe funcționalități, dar care suferă
-        de un proces de integrare destul de complex, aceasta depinzând de Bazel \cite{bazel_build_system},
-        care, la rândul lui, depinde de Java \cite{java_programming_language}}
+                de un proces de integrare destul de complex, aceasta depinzând de Bazel \cite{bazel_build_system},
+                care, la rândul lui, depinde de Java \cite{java_programming_language}}
     \item{Cairo \cite{cairo_library}: din nou o bibliotecă cu multe funcționalități, dar care suferă de aceeași
-        problemă legată de procesul de integrare, mai ales pe sistemele de operare care nu sunt tip UNIX \cite{unix}}
+                problemă legată de procesul de integrare, mai ales pe sistemele de operare care nu sunt tip UNIX \cite{unix}}
     \item{Bibliotecile care vin la pachet cu diverse sisteme de operare: acestea sunt avantajoase deoarece pot fi
-        integrate ușor. Inconvenientul este că sunt diferențe destul de mari între implementări, diferențe și de
-        performanță și de calitate, este destul de dificil să se obțină un rezultat identic pe platforme diferite}
+                integrate ușor. Inconvenientul este că sunt diferențe destul de mari între implementări, diferențe și de
+                performanță și de calitate, este destul de dificil să se obțină un rezultat identic pe platforme diferite}
 \end{itemize}
 
 \section{Problema abordată}
 
-Ceea ce vreau să creez este o bibliotecă de grafică vectorială care să fie ușor de integrat într-un proiect,
+Ceea ce vreau să creez este o bibliotecă de grafică vectorială care să fie eficientă, ușor de integrat într-un proiect,
 care să fie de o calitate decentă și care să aibă aceeași calitate pe platforme diferite.
 Pentru acest fapt am ales să folosesc limbajul Rust \cite{rust_lang}. Motivul principal este că Rust are un manager
 de pachete standard, ușor de folosit. Alt motiv este faptul că Rust este printre singurele limbaje populare care să
@@ -126,29 +127,207 @@ bibliotecile menționate mai sus (C++ și C). Acest manager de pachete face inte
 
 \section{Obiective}
 
-Obiectivul principal al acestei lucrări este o bibliotecă de grafică vectorială simplă, ușor de folosit și de integrat
-într-un proiect, de o calitate decentă, cu funcționalități standard, care să aibă aceeași calitate pe orice platformă
-suportată.
+Obiectivul principal al acestei lucrări este o bibliotecă de grafică vectorială simplă, eficientă, ușor de folosit
+și de integrat într-un proiect, de o calitate decentă, cu funcționalități standard, care să aibă aceeași calitate
+pe orice platformă suportată.
 
-\section{Alte proiecte relevante}
+\section{Proiecte din care m-am inspirat și contribuțiile mele}
+
+Pe lângă bibliotecile pe care le-am menționat mai sus, există și alte proiecte mai puțin cunoscute care au un scop similar
+cu acestea.
+
+Anti-Grain Geometry \cite{antigrain_library} este o bibliotecă cu un algoritm de desenare de foarte mare calitate, descris
+conceptual în documentația CL-VECTORS \cite{cl-aa_algorithm}. Algoritmul desenează linii pe o grilă care împarte pixelii
+în subpixeli, având astfel un efect de anti-aliere oricât de calitativ se vrea (în implementarea oficială anti-alierea este
+de 256x). Inițial am vrut să construiesc proiectul meu pe baza acestui algoritm, dar din păcate încercarea de a dezvolta
+un algoritm eficient pentru a calcula intersecțiile liniilor cu grila s-a dovedit a fi una mult prea dificilă.
+
+Biblioteca \texttt{font-rs} \cite{font-rs_library} prezintă un algoritm eficient de desenare prezentat de Raph Levien
+\cite{fastest_font_renderer_in_the_world}. Aceasta este biblioteca din care am ales să mă inspir pentru algoritmul de
+desenare. Algoritmul prezentat de Raph Levien se ocupă strict de desenarea fonturilor TrueType \cite{TrueType}, care
+folosesc doar curbe Bézier \cite{bezier_curve} de ordin 2. Contribuțiile mele pentru această metodă sunt:
+
+\begin{itemize}
+    \item{Am schimbat algoritmul de convertire a curbelor Bézier de ordin 2 la linii (algoritm care va fi descris mai jos)}
+    \item{Am adăugat suport pentru a desena curbe Bézier de ordin 3}
+    \item{Am implementat operatorii Porter-Duff \cite{Porter-Duff}}
+    \item{Am implementat suport pentru gradienți liniari, radiali și conici}
+\end{itemize}
+
+Există și proiecte care au ca scop desenarea elementelor de grafică vectorială folosindu-se direct de placa video, pentru
+eficiență sporită. Câteva exemple ar fi:
+
+\begin{itemize}
+    \item{„Signed Distance Fields” \cite{SDF_valve_paper} în care elementele de grafică vectorială sunt desenate inițial pe
+                o textură inițială în care se salvează distanța până la cel mai apropiat segment}
+    \item{Metoda Loop-Blinn \cite{Loop-Blinn_algorithm} în care elementele de grafică vectorială sunt triangulate, iar apoi
+                triunghiurile sunt trimise direct plăcii video}
+    \item{Slug \cite{Slug_library} în care se folosește algoritmul descris de Eric Lengyel \cite{Slug_paper}, care se folosește
+                de un format intermediar pentru a stoca curbele Bézier într-o structură de accelerare, care sunt mai apoi verificate
+                direct pe placa video în shaderul de fragment}
+    \item{MPVG \cite{MPVG_paper} în care elementele de grafică vectorială sunt stocate într-un arbore, iar curbele Bézier sunt
+                împărțite în segmente monotone pentru care se implementează o variantă a algoritmului de umplere din Loop-Blinn}
+    \item{„Efficient GPU Path Rendering Using Scanline Rasterization” \cite{GPU_Scanline_paper} în care elementele de grafică
+                vectorială sunt desenate într-o textură intermediară peste care se aplică algoritmul de sumă cumulativă}
+    \item{Pathfinder \cite{pathfinder_library} în care elementele de grafică vectorială sunt desenate pe o textură intermediară
+                în care se calculează acoperirea fiecărui pixel, ca mai apoi shaderul de fragment să calculeze doar culorile necesare pentru
+                fiecare pixel în funcție de acoperirea acestuia - o descriere mai detaliată a fost realizată de Nicolas Silva \cite{pathfinder_algorithm}}
+\end{itemize}
+
+În principal problema cu folosirea plăcii video este aceea a portabilității. Unul din obiectivele mele este ca biblioteca să
+fie ușor de integrat pe orice platformă, pe când placa video restricționează puțin acest lucru. Multe din metodele
+menționate mai sus folosesc funcționalități avansate ale plăcilor video, care pot lipsi în anumite cazuri. În plus, acestea
+folosesc algoritmi destul de greu de implementat/testat, și metode precum Loop-Blinn sau Slug încă se folosesc foarte mult
+de procesor pentru a prelucra elementele grafice. Mai mult, folosirea plăcii video limitează foarte mult posibilitatea extinderii
+implementării cu funcționalități noi, deoarece placa video nu poate rula algoritmi normali fără modificări serioase, care uneori
+pot aduce chiar regrese când vine vorba de performanță. Acestea sunt principalele motive pentru care am ales să folosesc o
+metodă clasică, care se folosește integral de procesor.
 
 \chapter{Algoritmul de bază}
 
-\section{Algoritmul de la baza AntiGrain}
+\section{Descrierea algoritmului la nivel înalt}
 
-\section{Algoritmul de intersecție între linii}
+Implementarea este împărțită în 2 etape:
 
-\section{Aplicarea algoritmului pe un set de date}
+\begin{itemize}
+    \item{Desenarea liniilor}
+    \item{Acumularea acoperirii pixelilor în urma desenării liniilor, printr-o sumă cumulativă}
+\end{itemize}
 
-\section{Cum tratăm liniile verticale?}
+Folosesc un buffer dedicat stocării acoperirii pixelilor, pe care îl numesc „buffer de acumulare”. Prin „desenarea liniilor”
+mă refer la calcularea acoperirii fiecărui pixel care face parte din linie, și stocarea acesteia în acel buffer de acumulare.
+Pentru a calcula aceste acoperiri mă folosesc de algoritmul lui Raph Levien din \texttt{font-rs} \cite{fastest_font_renderer_in_the_world}.
+
+În etapa a 2-a, parcurg bufferul de acumulare și calculez suma cumulativă a acoperirilor. Regula de umplere folosită este cea
+„non-zero” din SVG, adică cea în care un segment care este orientat de la stânga la dreapta va contribui pozitiv la acoperire,
+iar un segment orientat invers va contribui negativ la acoperire. Când acoperirea este diferită de 0 înseamnă că suntem în
+interiorul unei figuri.
+
+Pentru a descrie figurile, mă folosesc de câteva structuri ajutătoare. Cea mai importantă dintre ele este aceea care descrie
+operațiile care se pot efectua în cadrul unei figuri (similare cu cele din SVG):
+
+\begin{figure}[ht]
+    \centering
+    \begin{lstlisting}[language=Rust]
+    pub enum PathOps {
+        // f64: echivalent cu double din C
+        MoveTo { x: f64, y: f64 },
+        LineTo { x: f64, y: f64 },
+        QuadTo {
+            x1: f64, y1: f64, x2: f64, y2: f64
+        },
+        CubicTo {
+            x1: f64, y1: f64, x2: f64, y2: f64,
+            x3: f64, y3: f64,
+        },
+        Close,
+    }
+    \end{lstlisting}
+    \caption{Structura \texttt{PathOps}}
+    \label{fig-enum-pathops}
+\end{figure}
+
+Inițial figura începe la coordonata \((0, 0)\). Fiecare din operațiile de mai sus descrie traseul figurii. De exemplu, pentru a desena
+un triunghi într-un spațiu de \(100 \times 100\) pixeli se pot înșirui operațiile:
+
+\begin{figure}[ht]
+    \centering
+    \begin{lstlisting}[language=Rust]
+    let triangle = [
+        PathOps::MoveTo { x: 50.0, y: 0.0 },
+        PathOps::LineTo { x: 100.0, y: 100.0 },
+        PathOps::LineTo { x: 0.0, y: 100.0 },
+        PathOps::Close
+    ];
+    \end{lstlisting}
+    \caption{Descrierea unui triunghi folosind \texttt{PathOps}}
+    \label{fig-descrierea-unui-triunghi}
+\end{figure}
+
+Operația \texttt{PathOps::Close} va trasa o linie până la punctul din care a început figura - adică ultimul \texttt{MoveTo}. În cod,
+pentru a apela funcția de desenare se poate utiliza funcția \texttt{draw\_shape}, după cum se poate vedea în figura \ref{fig-desenarea-unui-triunghi}.
+
+\begin{figure}[ht]
+    \centering
+    \begin{lstlisting}[language=Rust]
+    canvas.draw_shape(
+        &triangle,
+        FillStyle::Plain(Color::red()),
+        FillRule::NonZero,
+        |p| *p
+    );
+    \end{lstlisting}
+    \caption{Desenarea unui triunghi}
+    \label{fig-desenarea-unui-triunghi}
+\end{figure}
+
+Astfel se va desena un triunghi roșu, ilustrat în figura \ref{fig-triunghi-simplu}. Ultimul parametru poate fi ignorat momentan, acesta reprezintă o
+transformare afină care se poate aplica punctelor din descrierea figurii. În acest exemplu nu am aplicat nicio transformare.
+\texttt{Canvas} va fi descris mai jos. În bibliotecă mai sunt implementate și operațiile \texttt{MoveToRel, LineToRel, QuadToRel, CubicToRel},
+care sunt echivalente cu operațiile de mai sus, doar că vor calcula următoarea poziție relativ la ultimul punct, spre deosebire de cele arătate
+mai sus, în care sunt specificate coordonate absolute.
+
+\begin{figure}[ht]
+    \includegraphics[height=8cm]{triunghi_simplu.png}
+    \centering
+    \caption{Linie aproximativ verticală}
+    \label{fig-triunghi-simplu}
+\end{figure}
+
+\section{Detalii despre implementare}
+
+Algoritmul care calculează acoperirea pixelilor care fac parte din linii funcționează prin parcurgerea liniei, ținând cont
+de cât de mult acoperă linia pixelul curent. În caz că nu este acoperit la maxim, se stochează acoperirea rămasă și pe
+pixelul vecin. Astfel se ajunge și la combaterea fenomenului de aliere.
+
+În figura \ref{fig-linie-verticala} se poate vedea cum se calculează acoperirile pentru o linie aproximativ verticală.
+Linia începe din colțul stânga-sus și se termină în colțul dreapta-jos. Inițial primul pixel este acoperit în întregime
+de linie și este colorat cu roșu opac, dar pe măsura ce linia progresează, pixelii de la început sunt acoperiți tot mai puțin
+de linie, astfel fiind colorați doar parțial cu roșu (se modifică parametrul care descrie opacitatea), într-un final ajungându-se
+acoperire 0. Dar indiferent de acoperirea pixelilor de la început, pe final se ajunge oricum la roșu opac, deoarece acoperirile pixelilor
+sunt însumate, iar însumarea lor va rezulta mereu în acoperire maximă.
+
+În figura \ref{fig-linie-oblica} se poate observa cum o linie oblică va avea mereu acoperire de \(50\%\) la primii pixeli. Pixelii imediat
+vecini vor avea o acoperire identică, astfel suma lor ajungând la acoperire maximă. Atunci când liniile sunt specificate de la dreapta
+la stânga valorile acoperirilor sunt identice, dar vor fi negative, pentru a păstra proprietatea că suma cumulativă trebuie să fie
+0 atunci când suntem în afara unei figuri.
+
+\begin{figure}[ht]
+    \includegraphics[height=8cm]{linie_aproximativ_verticala.png}
+    \centering
+    \caption{Linie aproximativ verticală}
+    \label{fig-linie-verticala}
+\end{figure}
+
+\begin{figure}[ht]
+    \includegraphics[height=5cm]{linie_oblica.png}
+    \centering
+    \caption{Linie înclinată la 45 de grade}
+    \label{fig-linie-oblica}
+\end{figure}
+
+\subsection{Cum tratez liniile orizontale?}
+
+Un caz particular al acestei metode este reprezentat de liniile orizontale. Conceptual nu are sens ca o linie
+orizontală să aibă acoperiri ai pixelilor. Acest lucru nu ar face posibilă calcularea sumei cumulative în mod corect.
+De exemplu, dacă fiecare pixel de pe o linie orizontală ar avea acoperire \(100\%\), suma cumulativă ar deveni egală
+cu numărul de pixeli. Această sumă este mult prea mare pentru a se putea ajunge înapoi la 0 pentru delimita figura.
+Astfel, desenarea s-ar face în mod incorect.
+
+Soluția este să ignor liniile orizontale. O figură bine definită va avea mereu segmente care nu sunt orizontale,
+acestea dictând suma cumulativă. În cazul triunghiului desenat în figura \ref{fig-triunghi-simplu}, baza are acoperirile
+dictate de linia oblică din stânga. Biblioteca acceptă doar figuri bine definite, adică figuri închise, similar cum SVG
+acceptă doar figuri închise pentru algoritmii de umplere.
 
 \chapter{Extinderea algoritmului la mai multe primitive}
 
-\section{Curbe Bézier}
+\section{Curbe Bézier de ordin 2}
 
-\section{Transformarea curbelor Bézier pătratice în set de linii}
+\subsection{Transformarea curbelor Bézier pătratice în set de linii}
 
-\section{Transformarea curbelor Bézier cubice în set de linii}
+\section{Curbe Bézier de ordin 3}
+
+\subsection{Transformarea curbelor Bézier cubice în set de linii}
 
 \chapter{Efecte}
 
@@ -159,27 +338,9 @@ suportată.
 \subsection{Conici}
 
 \section{Amestecare}
-\subsection{Amestecarea mai multor figuri făcând parte din același grup}
 \subsection{Porter-Duff}
 
-\section{Decuparea}
-
-\section{Mascarea}
-
 \section{Spații de culoare}
-
-\chapter{Exemplu de cod Rust}
-
-\begin{figure}[ht]
-    \centering
-    \begin{lstlisting}[language=Rust]
-    fn main() {
-        println!("Hello {}!", "world");
-    }
-    \end{lstlisting}
-    \caption{Un simplu 'Hello World!'}
-    \label{fig-rust}
-\end{figure}
 
 \printbibliography
 
