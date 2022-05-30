@@ -25,7 +25,7 @@ pub const REFERENCE_HASHES: [(&str, &str); 10] = [
     ),
     (
         "triangle_test",
-        "765A7406D707AF35C371B3505B0688C51FB11B42BBB5B46233EAA445A2F28675",
+        "DB57D40754C6871D66B23D1CA2A750791303347136EE35BE680A0FD2684289D1",
     ),
     (
         "alpha_blending_test",
