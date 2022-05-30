@@ -11,3 +11,5 @@ target/
 *.xml
 *.log
 *.gz
+*.fdb_latexmk
+*.fls
