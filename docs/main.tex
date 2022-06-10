@@ -321,13 +321,204 @@ acceptă doar figuri închise pentru algoritmii de umplere.
 
 \chapter{Extinderea algoritmului la mai multe primitive}
 
+Pentru a facilita desenarea figurilor mai complexe, am extins algoritmul de bază, adăugând suport pentru curbe Bézier
+de ordin 2 și ordin 3. Ideea implementării este de a converti curbele la o înșiruire de linii suficient de „densă” pentru
+a nu se putea observa faptul că de fapt am desenat niște linii, și nu am lucrat analitic cu curbele.
+
 \section{Curbe Bézier de ordin 2}
 
-\subsection{Transformarea curbelor Bézier pătratice în set de linii}
+Curbele Bézier de ordin 2 sunt reprezentate sub forma:
+
+\[
+    B(t) = (1 - t)^2 P_0 + 2 (1 - t) t P_1 + t^2 P_2, \ 0 \leq t \leq 1
+\]
+
+Unde \(P_0, P_1, P_2\) sunt punctele de control ale curbei.
+
+Pentru a converti curbele Bézier de ordin 2 la linii am ales să implementez metoda prezentată de Raph Levien
+\cite{FlatteningQuadraticBezierCurves}. Metoda propusă prezintă o formulă pentru calcularea numărului de segmente
+necesare pentru a reprezenta curba, folosindu-se de proprietatea curbelor Bézier de ordin 2 care ne spune că acestea
+pot fi interpretate ca o secțiune dintr-o parabolă \(y = x^2\), modulo rotație, scalație și translație.
+
+Distanța maximă între curbă și coardă pentru o parabolă \(y = x^2\) este aproximativ \(\frac{1}{8} \kappa \Delta s^2\),
+unde \(\kappa\) reprezintă curbura iar \(\Delta s\) reprezintă o distanță tinzând spre 0, astfel considerând o coardă cât mai mică.
+Formulele pentru acestea, pentru o parabolă, sunt relativ simple:
+
+\[
+    \kappa = \frac{f''(x)}{\left(1 + f'(x)^2\right)^{\frac{3}{2}}} = \frac{2}{\left(1 + 4x^2\right)^{\frac{3}{2}}}
+\]
+\[
+    \Delta s = \sqrt{1 + \left(\frac{dy}{dx}\right)^2} dx = \sqrt{1 + 4x^2} \Delta x
+\]
+
+Înlocuind acestea în formula de mai sus putem determina pe \(\Delta x\):
+
+\[ \Delta x = 2 \sqrt{\Delta y} \sqrt[4]{1 + 4 x^2} \]
+
+Care reprezintă „pasul” necesar pentru fiecare linie. Pentru a afla numărul de segmente vom calcula inversul aceste expresii,
+luat pe intervalul pe care îl dorim:
+
+\[
+    f(x) = nr. segmente = \frac{1}{2 \sqrt{\Delta y}} \int\limits_{x_0}^{x_1} \frac{1}{\sqrt[4]{1 + 4x^2}} dx
+\]
+
+Pentru determinarea parametrului \(t\) pentru fiecare linie generată, va trebuie să calculăm inversul acestei funcții. Metoda
+propusă oferă două aproximări pentru calcularea acestora:
+
+\[
+    f(x) \approx \frac{x}{0.33 + \sqrt[4]{0.67^4 + \frac{1}{4} x^2}}
+\]
+\[
+    f^{-1}(x) \approx x \left( 0.61 + \sqrt{0.39^2 + \frac{1}{4} x^2} \right)
+\]
+
+În implementare se folosește o structură care să faciliteze lucrul cu curbele Bézier de ordin 2, așa cum este prezentată în
+figura \ref{fig-struct-quadbezier}. Convertirea la linii, prezentată în \ref{fig-quadbezier-subdivide}, se efectuează folosind
+ideea prezentată mai sus. După cum se poate vedea, algoritmul nu este recursiv, spre deosebire de metoda De Casteljau
+care este folosită de obicei.
+
+\begin{figure}[ht]
+    \centering
+    \begin{lstlisting}[language=Rust]
+pub struct QuadraticBezier {
+    x0: f64, y0: f64,
+    x1: f64, y1: f64,
+    x2: f64, y2: f64
+}
+    \end{lstlisting}
+    \caption{Structura care descrie curbele Bézier de ordin 2}
+    \label{fig-struct-quadbezier}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \begin{lstlisting}[language=Rust]
+pub fn subdivide(&self, err: f64) -> Vec<f64> {
+    let params = self.map_to_basic();
+    let (a0, a2) = (
+        approximate_integral(params.x0),
+        approximate_integral(params.x2)
+    );
+    let count = 0.5 * f64::abs(a2 - a0)
+        * f64::sqrt(params.scale / err);
+    let n = f64::ceil(count);
+    let (u0, u2) = (
+        approximate_inverse_integral(a0),
+        approximate_inverse_integral(a2)
+    );
+    let mut result = vec![0_f64];
+
+    for i in 1..(n as i32) {
+        let u = approximate_inverse_integral(
+            a0 + ((a2 - a0) * (i as f64)) / n
+        );
+        let t = (u - u0) / (u2 - u0);
+        result.push(t);
+    }
+
+    result.push(1.0); return result;
+}
+    \end{lstlisting}
+    \caption{Algoritmul de convertire a curbelor Bézier de ordin 2 la linii}
+    \label{fig-quadbezier-subdivide}
+\end{figure}
+
+În figura \ref{fig-curba-bezier-de-ordin-2} se poate vedea un exemplu de curbă Bézier de ordin 2 desenată folosind metoda
+prezentată mai sus, cu un parametru de toleranță de \(0.5\) - parametru care decide cât de „aproape” de curba ideală vrem
+să fim; cu cât valoarea este mai mică cu atât curba va arăta mai „curbată”, dar se vor genera și mult mai multe linii și
+performanța poate scădea. Poza este mărită intenționat pentru a observa calitatea implementării. Deși în figură se poate observa
+faptul că doar am generat linii în loc să desenez o curbă, în practică acest lucru este aproape invizibil, mai ales când
+se desenează text. Curbele vor fi oricum mici sau nu vor avea astfel de curburi extreme. Arăt acest fapt prin figura
+\ref{fig-litera-arond}. Am desenat-o cu un parametru de toleranță chiar mai mare, adică \(1.0\), și se poate observa cum
+este invizibil faptul că s-au generat linii pentru a desena curbele care constituie litera „@”.
+
+\begin{figure}[ht]
+    \includegraphics[height=5cm]{curba_bezier_de_ordin_2.png}
+    \centering
+    \caption{O curbă Bézier de ordin 2}
+    \label{fig-curba-bezier-de-ordin-2}
+\end{figure}
+
+\begin{figure}[ht]
+    \includegraphics[height=10cm]{litera_arond.png}
+    \centering
+    \caption{Litera „@” desenată folosind metoda menționată}
+    \label{fig-litera-arond}
+\end{figure}
 
 \section{Curbe Bézier de ordin 3}
 
-\subsection{Transformarea curbelor Bézier cubice în set de linii}
+Pentru a converti curbele Bézier de ordin 3 la linii am folosit algoritmul lui De Casteljau, mai exact metoda
+prezentată de Kaspar Fischer \cite{DeCasteljau_algorithm}. O curbă Bézier de ordin 3 este reprezentată ca:
+
+\[
+    B(t) = (1 - t)^3 P_0 + 3 (1 - t)^2 t P_1 + 3 (1 - t) t^2 P_2 + t^3 P_3, \ 0 \leq t \leq 1
+\]
+
+Unde \(P_0, P_1, P_2, P_3\) sunt punctele de control ale curbei Bézier de ordin 3.
+
+Algoritmul lui De Casteljau ne dă o metodă prin care să împărțim curba la un anumit \(t\) în 2 curbe mai mici,
+de același ordin. Metoda menționată vine cu o metodă de a decide când să ne oprim să împărțim curba în două,
+adică când considerăm că linia curentă este suficient de mică astfel încât efectul vizual să fie cât mai bun.
+În figura \ref{fig-cubic-split} prezint codul care se ocupă cu această evaluare, care se folosește la rândul
+ei de un parametru de toleranță.
+
+\begin{figure}[ht]
+    \centering
+    \begin{lstlisting}[language=Rust]
+// is_sufficiently_flat
+let mut u = 3.0 * p1 - 2.0 * p0 - p3;
+let mut v = 3.0 * p2 - 2.0 * p3 - p0;
+
+ux *= u.x; u.y *= uy;
+vx *= v.x; v.y *= vy;
+
+if u.x < v.x {
+    u.x = v.x;
+}
+if u.y < v.y {
+    u.y = v.y;
+}
+
+let is_flat = ux + uy <= tolerance;
+    \end{lstlisting}
+    \caption{Instrucțiunile care decid când o linie este suficient de mică pentru a ne opri în împărțirea De Casteljau}
+    \label{fig-cubic-split}
+\end{figure}
+
+Generarea liniilor este implementată printr-un algoritm recursiv, descris în \ref{fig-subdivision-algorithm}.
+
+\begin{figure}[ht]
+    \centering
+    \begin{lstlisting}[language=Rust]
+fn subdivide(&self, lines: &mut Vec<Point>, tolerance: f64) {
+    if self.is_sufficiently_flat(tolerance) {
+        lines.push(Point {
+            x: self.x3,
+            y: self.y3,
+        });
+
+        return;
+    }
+    let (left, right) = self.split();
+    left.subdivide_impl(lines, tolerance);
+    right.subdivide_impl(lines, tolerance);
+}
+    \end{lstlisting}
+    \caption{Algoritmul care convertește curbe Bézier de ordin 3 la linii}
+    \label{fig-subdivision-algorithm}
+\end{figure}
+
+În figura \ref{fig-cubic-example} se poate vedea o demonstrație a metodei de desenare a curbelor Bézier de ordin 3.
+Parametrul de toleranță folosit pentru generare a fost \(0.25\). Din nou, faptul că am folosit linii pentru a „simula”
+curba este practic vizual invizibil.
+
+\begin{figure}[ht]
+    \includegraphics[height=8cm]{curba_cubica.png}
+    \centering
+    \caption{Figură determinată de mai multe curbe Bézier de ordin 3}
+    \label{fig-cubic-example}
+\end{figure}
 
 \chapter{Efecte}
 
