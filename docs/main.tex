@@ -12,6 +12,7 @@
 \usepackage{setspace}
 \onehalfspace
 
+\usepackage{hyperref}
 \usepackage{csquotes}
 \DeclareQuoteStyle{romanian}
   {\quotedblbase}
@@ -510,7 +511,7 @@ fn subdivide(&self, lines: &mut Vec<Point>, tolerance: f64) {
 \end{figure}
 
 În figura \ref{fig-cubic-example} se poate vedea o demonstrație a metodei de desenare a curbelor Bézier de ordin 3.
-Parametrul de toleranță folosit pentru generare a fost \(0.25\). Din nou, faptul că am folosit linii pentru a „simula”
+Parametrul de toleranță folosit pentru generare a fost \texttt{0.25}. Din nou, faptul că am folosit linii pentru a „simula”
 curba este practic vizual invizibil.
 
 \begin{figure}[ht]
@@ -520,7 +521,64 @@ curba este practic vizual invizibil.
     \label{fig-cubic-example}
 \end{figure}
 
+\newpage
+
+\section{Desenare de text}
+
+Având implementarea pentru primitivele mai sus menționate, pot desena text prin desenarea de caractere descrise prin
+fonturi precum TrueType. Caracterele sunt descrise prin curbe Bézier, eu trebuind doar să traduc descrierea din formatul
+TrueType în formatul pe care îl acceptă proiectul meu. Pentru acest lucru mă ajut de pachetul \texttt{ttf\_parser}
+\cite{TrueTypeParser}.
+
+Acest pachet îmi va citi un fișier TrueType și îmi va permite să implementez cinci funcții care vor fi folosite pentru
+traducerea descrierii caracterelor din formatul TrueType în formatul bibliotecii mele, așa cum este demonstrat în figura
+\ref{fig-ttf-parser-demo}. Am prezentat doar funcția \texttt{move\_to}, dar implementarea se adaptează ușor la celelalte funcții.
+Există câte o funcție pentru fiecare primitivă din enumerarea \texttt{PathOps} prezentată de mine la început. În figurile
+\ref{fig-text-verg} și \ref{fig-text-fmi} se pot vedea două exemple de text desenat folosind biblioteca mea. Figura
+\ref{fig-text-verg} a fost generată folosind fontul Roboto \cite{Roboto}, iar figura \ref{fig-text-fmi} a fost generată
+folosind fontul Wildwood \cite{Wildwood}.
+
+\begin{figure}[ht]
+    \centering
+    \begin{lstlisting}[language=Rust]
+fn move_to(x: f32, y: f32) {
+    let new_point = Point {
+        x: (x - min_x) as f64,
+        y: height as f64 - (y - min_y) as f64,
+    };
+    prev_point = new_point;
+    starting_point = new_point;
+    path_ops.push(PathOps::MoveTo {
+        x: new_point.x,
+        y: new_point.y,
+    });
+}
+    \end{lstlisting}
+    \caption{Funcția \texttt{move\_to} folosită de \texttt{ttf\_parser}}
+    \label{fig-ttf-parser-demo}
+\end{figure}
+
+\begin{figure}[ht]
+    \includegraphics[width=5cm]{text_verg.png}
+    \centering
+    \caption{Numele bibliotecii mele desenat folosind chiar biblioteca}
+    \label{fig-text-verg}
+\end{figure}
+
+\begin{figure}[ht]
+    \includegraphics[height=5cm]{text_fmi.png}
+    \centering
+    \caption{Textul „FMI” desenat folosind biblioteca mea}
+    \label{fig-text-fmi}
+\end{figure}
+
 \chapter{Efecte}
+
+Pentru a permite descrierea figurilor mai complexe, am implementat în bibliotecă și suport pentru efectul de gradient.
+Mai concret, am implementat suport pentru gradienți liniari, radiali și conici, care vor fi descriși în detaliu mai jos.
+De asemenea, am introdus și suport pentru diverși operatori de amestecare, adică operatorii Porter-Duff \cite{Porter-Duff}.
+Se pot introduce inclusiv funcții de amestecare care să fie definite de utilizator, pentru flexibilitate maximă. În plus,
+am adăugat suport și pentru transformări afine asupra punctelor care constituie figurile.
 
 \section{Gradienți}
 
@@ -531,7 +589,11 @@ curba este practic vizual invizibil.
 \section{Amestecare}
 \subsection{Porter-Duff}
 
+\section{Transformări}
+
 \section{Spații de culoare}
+
+\chapter{Concluzii}
 
 \printbibliography
 
