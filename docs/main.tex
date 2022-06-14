@@ -339,7 +339,7 @@ Unde \(P_0, P_1, P_2\) sunt punctele de control ale curbei.
 Pentru a converti curbele Bézier de ordin 2 la linii am ales să implementez metoda prezentată de Raph Levien
 \cite{FlatteningQuadraticBezierCurves}. Metoda propusă prezintă o formulă pentru calcularea numărului de segmente
 necesare pentru a reprezenta curba, folosindu-se de proprietatea curbelor Bézier de ordin 2 care ne spune că acestea
-pot fi interpretate ca o secțiune dintr-o parabolă \(y = x^2\), modulo rotație, scalație și translație.
+pot fi interpretate ca o secțiune dintr-o parabolă \(y = x^2\), modulo rotație, scalare și translație.
 
 Distanța maximă între curbă și coardă pentru o parabolă \(y = x^2\) este aproximativ \(\frac{1}{8} \kappa \Delta s^2\),
 unde \(\kappa\) reprezintă curbura iar \(\Delta s\) reprezintă o distanță tinzând spre 0, astfel considerând o coardă cât mai mică.
@@ -582,18 +582,203 @@ am adăugat suport și pentru transformări afine asupra punctelor care constitu
 
 \section{Gradienți}
 
-\subsection{Liniari}
-\subsection{Radiali}
-\subsection{Conici}
+Gradienții funcționează prin calcularea unui parametru \texttt{t} între \texttt{0} și \texttt{1} care dictează cât de mult
+s-a parcurs gradientul la poziția \((x, y)\). În implementarea mea, pentru o figură arbitrară, gradientul pornește prin a
+determina dreptunghiul care acoperă în întregime figura. Apoi, în pasul în care se calculează suma cumulativă a acoperirilor,
+acel \texttt{t} se va determina raportat la dreptunghiul calculat anterior. Voi descrie mai jos câteva detalii importante din
+implementare pentru fiecare tip de gradient, ilustrați în figura \ref{fig-gradients}.
+
+\begin{figure}[ht]
+    \includegraphics[height=10cm]{gradienti.png}
+    \centering
+    \caption{Exemplu de gradienți (de sus în jos) liniari, radiali și conici}
+    \label{fig-gradients}
+\end{figure}
+
+\subsection{Gradienți Liniari}
+
+În cazul gradienților liniari avem câțiva parametri la care ne raportăm:
+
+\begin{itemize}
+    \item{\((x, y)\) - punctul la care suntem în dreptunghiul care acoperă figura}
+    \item{\(((min\_x, min\_y), (max\_x, max\_y))\) - coordonatele dreptunghiului care acoperă figura}
+    \item{\texttt{stops} - un șir de perechi \((Culoare, t)\), unde \texttt{t} reprezintă o valoare între \(0\) și \(1\)
+                care semnifică culoarea care se va afla la acel parametru \texttt{t} din gradient}
+\end{itemize}
+
+Pentru efectul de gradient se interpolează liniar culorile din șirul \texttt{stops} în funcție de culorile între care se află
+parametrul \texttt{t}. Pentru a calcula parametrul \texttt{t} avem implementarea din figura \ref{fig-linear-gradient-impl}.
+Pentru a calcula culoarea finală din gradient, se va face acea interpolare liniară, ilustrată în figura \ref{fig-linear-gradient-interpolation}.
+
+\begin{figure}[ht]
+    \centering
+    \begin{lstlisting}[language=Rust]
+let clamped_x = clamp(x, min_x, max_x);
+let fx = (clamped_x - min_x) / gradient_width;
+let mut stop_index = 0_usize;
+while stop_index < stops.len() && stops[stop_index].1 < fx {
+    stop_index += 1;
+}
+stop_index = clamp(stop_index, 0, stops.len() - 1);
+let (mut c1, mut c2) = (stops[stop_index-1].0, stops[stop_index].0);
+let (s1, s2) = (stops[stop_index - 1].1, stops[stop_index].1);
+let t = (fx - s1) / (s2 - s1);
+    \end{lstlisting}
+    \caption{Calcularea parametrului \texttt{t} pentru gradienții liniari}
+    \label{fig-linear-gradient-impl}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \begin{lstlisting}[language=Rust]
+Color {
+    r: (1.0 - t) * c1.r + t * c2.r,
+    g: (1.0 - t) * c1.g + t * c2.g,
+    b: (1.0 - t) * c1.b + t * c2.b,
+    a: (1.0 - t) * c1.a + t * c2.a,
+}
+    \end{lstlisting}
+    \caption{Interpolare liniară între culorile din \texttt{stops} ale gradientului liniar}
+    \label{fig-linear-gradient-interpolation}
+\end{figure}
+
+\subsection{Gradienți Radiali}
+
+Gradienții radiali au aceiași parametri precum cei liniari. Singura diferență este modul în care se calculează acel parametru
+\texttt{t}. De data aceasta parametrul este calculat în funcție de distanța în modul a punctului \((x, y)\) față de centrul
+dreptunghiului care acoperă figura. Această distanță este calculată folosind codul din figura \ref{fig-radial-gradient-impl}.
+În rest implementarea este identică cu cea de la gradienții liniari, făcându-se interpolare liniară între elementele din
+\texttt{stops}.
+
+\begin{figure}[ht]
+    \centering
+    \begin{lstlisting}[language=Rust]
+let clamped = Point {
+    x: clamp(x, min_x, max_x),
+    y: clamp(y, min_y, max_y),
+};
+let dist = clamped.distance_to(&center).abs() / gradient_width;
+    \end{lstlisting}
+    \caption{Calcularea distanței față de centrul dreptunghiului care acoperă figura, pentru gradienții radiali}
+    \label{fig-radial-gradient-impl}
+\end{figure}
+
+\subsection{Gradienți Conici}
+
+În cazul gradienților conici avem din nou parametri identici cu celelalte tipuri de gradient. Modul de calculare al parametrului
+\texttt{t} diferă din nou. De această dată parametrul \texttt{t} este interpretat ca fiind un procent din unghiul \(2\pi\).
+Ne raportăm tot la centrul dreptunghiului care acoperă figura. Pentru a calcula unghiul dintre punctul \((x, y)\) și centrul
+dreptunghiului mă folosesc de funcția \(atan2\), așa cum este ilustrat în figura \ref{fig-conic-gradient-impl}. Iarăși, restul
+implementării este la fel cu celelalte implementări de gradienți.
+
+\begin{figure}[ht]
+    \centering
+    \begin{lstlisting}[language=Rust]
+let angle = Angle::from_radians(
+    f64::atan2(center.y - y, x - center.x)
+.abs());
+    \end{lstlisting}
+    \caption{Calcularea în modul a unghiului dintre punctul \((x, y)\) și centrul dreptunghiului care acoperă figura, pentru gradienții conici}
+    \label{fig-conic-gradient-impl}
+\end{figure}
 
 \section{Amestecare}
-\subsection{Porter-Duff}
+
+Pentru a facilita mai multe efecte în descrierea figurilor, am decis să adaug și suport pentru diverși operatori de amestecare,
+mai exact operatorii introduși de Porter-Duff \cite{Porter-Duff}. Procesul de amestecare are loc în etapa calculării sumei
+cumulative a acoperirilor, acoperirea fiind chiar factorul de amestecare. Culoarea sursă (pe care o notez cu \(S\)) și culoarea
+destinație (pe care o notez cu \(D\)) reprezintă parametrii necesari pentru amestecare. Operatorii de amestecare reprezintă
+combinații liniare între aceste culori. Toți operatorii sunt ilustrați în figura \ref{fig-alpha-compositing}. Mai jos descriu
+combinațiile liniare pentru operatorii de amestecare. \(S_A\) și \(D_A\) reprezintă factorii de amestecare pentru culoarea sursă
+și pentru culoarea destinație. În cazul culorii sursă factorul de amestecare este reprezentat chiar de acoperire, iar în cazul
+culorii destinație, acesta este valoarea care este stocată la acel moment în bufferul de culori:
+
+\begin{itemize}
+    \item{\texttt{source-over}: \(S + D \times (1 - S_A)\)}
+    \item{\texttt{destination-over}: \(S \times (1 - D_A) + D\)}
+    \item{\texttt{source-out}: \(S \times (1 - D_A)\)}
+    \item{\texttt{destination-out}: \(D \times (1 - S_A)\)}
+    \item{\texttt{source-in}: \(S \times D_A\)}
+    \item{\texttt{destination-in}: \(D \times S_A\)}
+    \item{\texttt{source-atop}: \(S \times D_A + D \times (1 - S_A)\)}
+    \item{\texttt{destination-atop}: \(S \times (1 - D_A) + D \times S_A\)}
+    \item{\texttt{xor}: \(S \times (1 - D_A) + D \times (1 - S_A) \)}
+    \item{\texttt{source}: \(S\)}
+    \item{\texttt{destination}: \(D\)}
+    \item{\texttt{additive}: \(S + D\)}
+\end{itemize}
+
+\begin{figure}[ht]
+    \includegraphics[height=10cm]{amestecare.png}
+    \centering
+    \caption{Operatorii de amestecare, în ordine, de sus în jos, de la stânga la dreapta}
+    \label{fig-alpha-compositing}
+\end{figure}
 
 \section{Transformări}
 
+Pentru a ușura descrierea figurilor complexe, am implementat și suport pentru transformări afine asupra punctelor ce definesc
+o figură. În implementarea mea, transformările sunt specificate folosind funcții care au ca parametru un punct \((x, y)\) și
+care întorc tot un punct. Fiecare transformare afină va avea anumiți parametri specifici în plus.
+Mai exact, am implementat suport pentru trasnformările:
+
+\newpage
+
+\begin{itemize}
+    \item{Translație}
+    \begin{itemize}
+        \item \(transform(x, y, offset) = (x + offset.x, y + offset.y)\)
+    \end{itemize}
+    \item{Rotație}
+    \begin{itemize}
+        \item \(transform(x, y, angle) = (\\
+              \ \ \ x \times sin(angle) - y \times cos(angle),\\
+              \ \ \ x \times cos(angle) + y \times sin(angle)\\
+              )\)
+    \end{itemize}
+    \item{Scalare}
+    \begin{itemize}
+        \item \(transform(x, y, scale) = (x \times scale.x, y \times scale.y)\)
+    \end{itemize}
+    \item{Înclinare}
+    \begin{itemize}
+        \item \(skew(x, y, angle_x, angle_y) = (\\
+              \ \ \ x + y \times tan(angle_y),\\
+              \ \ \ y + x \times tan(angle_x)\\
+              )\)
+    \end{itemize}
+\end{itemize}
+
+În figura \ref{fig-transforms} sunt ilustrate toate transformările afine implementate. De menționat este și faptul că gradienții
+acceptă transformări afine, care se vor aplica pe punctele din interiorul dreptunghiului care acoperă figura.
+
+\begin{figure}[ht]
+    \includegraphics[height=10cm]{transformari_afine.png}
+    \centering
+    \caption{Transformările afine implementate, în ordine, de sus în jos}
+    \label{fig-transforms}
+\end{figure}
+
 \section{Spații de culoare}
 
+Un aspect important când vine vorba de grafică este acela al spațiilor de culoare. Mai precis, spațiile de culoare decid cum
+se reproduc culorile (un exemplu popular este spațiul \texttt{sRGB} \cite{sRGB}). În cazul implementării mele, toate operațiile
+pe culori se petrec în spațiul liniar. Acest lucru permite flexibilitate maximă, deoarece orice fel de corecții asupra
+culorilor pot fi implementate de către utilizatorul bibliotecii după ce desenarea figurilor a luat sfârșit.
+
 \chapter{Concluzii}
+
+În această lucrare am prezentat o metodă de a desena eficient, din punct de vedere al memoriei, imagini vectoriale. Am pornit
+de la o implementare în care se desenează doar curbe Bézier de ordin 2, dar care este foarte eficientă, pe care am extins-o
+ulterior la curbe Bézier de ordin 3 pentru a suporta descrierea figurilor cât mai complexe.
+
+Pentru a fi o bibliotecă de grafică vectorială am adăugat suport și pentru operatori de amestecare, gradienți și transformări
+asupra punctelor care constituie figuri vectoriale.
+
+Toate acestea nu necesită decât 2 zone de memorie: o zonă care stochează acoperiri parțiale ale pixelilor, și o zonă care
+stochează culorile care vor constitui imaginea finală. Asupra zonei de memorie în care se află acoperirile parțiale se va
+efectua o sumă cumulativă pentru a implementa regula de umplere care se bazează pe orientarea primitivelor față de sensul
+parcurgerii imaginii (adică de la stânga la dreapta).
 
 \printbibliography
 
