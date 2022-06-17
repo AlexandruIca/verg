@@ -105,6 +105,13 @@ const SMALL_PURPLE_TRIANGLE: [PathOps; 4] = [
 
 const FILL_PURPLE: FillStyle = FillStyle::Plain(Color::dark_slate_blue());
 
+const SMALL_RED_TRIANGLE: [PathOps; 4] = [
+    PathOps::MoveTo { x: 230.0, y: 350.0 },
+    PathOps::LineToRel { x: 50.0, y: 100.0 },
+    PathOps::LineToRel { x: -100.0, y: 0.0 },
+    PathOps::Close,
+];
+
 const FILL_RULE: FillRule = FillRule::NonZero;
 
 implement_test! {
@@ -116,5 +123,6 @@ implement_test! {
     IMPERFECT_RECT_PART1,       FILL_CYAN,     FILL_RULE, default_blending,
     IMPERFECT_RECT_PART2,       FILL_CYAN,     FILL_RULE, default_blending,
     DIAMOND,                    FILL_DIAMOND,  FILL_RULE, default_blending,
-    SMALL_PURPLE_TRIANGLE,      FILL_PURPLE,   FILL_RULE, default_blending
+    SMALL_PURPLE_TRIANGLE,      FILL_PURPLE,   FILL_RULE, default_blending,
+    SMALL_RED_TRIANGLE,         FILL_RED,      FILL_RULE, default_blending
 }

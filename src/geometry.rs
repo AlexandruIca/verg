@@ -195,12 +195,12 @@ impl CubicBezier {
 
         let x = one_minus_t_cubed * self.x0
             + 3.0 * t * one_minus_t_squared * self.x1
-            + 3.0 * t * 2.0 * one_minus_t * self.x2
+            + 3.0 * t * t * one_minus_t * self.x2
             + t * t * t * self.x3;
 
         let y = one_minus_t_cubed * self.y0
             + 3.0 * t * one_minus_t_squared * self.y1
-            + 3.0 * t * 2.0 * one_minus_t * self.y2
+            + 3.0 * t * t * one_minus_t * self.y2
             + t * t * t * self.y3;
 
         Point { x, y }
