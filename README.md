@@ -2,7 +2,7 @@
 
 # Verg
 
-This is a WIP vector graphics rendering library. Its goal is to be simple to use and easy to embed in existing projects. It doesn't necessarily want to implement a lot of features. Currently supported things are:
+This is a small, simple vector graphics rendering library. Its goal is to be simple to use and easy to embed in existing projects. It doesn't necessarily want to implement a lot of features. Currently supported things are:
 - Rendering quadratic and cubic Bézier curves
 - Gradients: linear, radial, conic
 - Porter-Duff blending
